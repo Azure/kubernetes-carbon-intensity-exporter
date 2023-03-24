@@ -49,7 +49,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push images
         run: |
-          cd carbon-aware
           OUTPUT_TYPE=type=registry make  docker-build-server-image
         env:
           SERVER_IMG_TAG: ${{ env.SERVER_IMG_TAG }}
