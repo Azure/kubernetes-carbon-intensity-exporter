@@ -1,0 +1,55 @@
+name: Create images
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+permissions:
+  contents: write
+  packages: write
+
+
+env:
+  REGISTRY: ghcr.io
+  # Common versions
+  GO_VERSION: '1.19'
+  
+  SERVER_IMAGE_NAME: 'server'
+  SERVER_IMG_TAG : '0.1.0'
+
+jobs:
+  export-registry:
+    runs-on: ubuntu-20.04
+    outputs:
+      registry: ${{ steps.export.outputs.registry }}
+    steps:
+      - id: export
+        run: |
+          # registry must be in lowercase
+          echo "registry=$(echo "${{ env.REGISTRY }}/${{ github.repository }}" | tr [:upper:] [:lower:])" >> $GITHUB_OUTPUT
+
+  publish-images:
+    runs-on: ubuntu-20.04
+    needs:
+    - export-registry
+    env:
+      REGISTRY: ${{ needs.export-registry.outputs.registry }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - name: Login to ${{ env.REGISTRY }}
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push images
+        run: |
+          cd carbon-aware
+          OUTPUT_TYPE=type=registry make  docker-build-server-image
+        env:
+          SERVER_IMG_TAG: ${{ env.SERVER_IMG_TAG }}
