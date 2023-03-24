@@ -1,0 +1,821 @@
+openapi: 3.0.1
+info:
+  title: "CarbonAware.WebApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
+  version: "1.0"
+servers:
+- url: https://virtserver.swaggerhub.com/Microsoft-hela/carbonaware/1.0.0
+  description: SwaggerHub API Auto Mocking
+- url: https://carbonaware.swagger.io/v2
+paths:
+  /emissions/bylocations/best:
+    get:
+      tags:
+      - CarbonAware
+      summary: Calculate the best emission data by list of locations for a specified
+        time period.
+      operationId: GetBestEmissionsDataForLocationsByTime
+      parameters:
+      - name: location
+        in: query
+        description: String array of named locations
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: time
+        in: query
+        description: "[Optional] Start time for the data query."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2022-03-01T15:30:00Z
+        example: 2022-03-01T15:30:00Z
+      - name: toTime
+        in: query
+        description: "[Optional] End time for the data query."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2022-03-01T18:30:00Z
+        example: 2022-03-01T18:30:00Z
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmissionsData'
+                x-content-type: application/json
+            application/json; charset=utf-8:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmissionsData'
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+  /emissions/bylocations:
+    get:
+      tags:
+      - CarbonAware
+      summary: Calculate the observed emission data by list of locations for a specified
+        time period.
+      operationId: GetEmissionsDataForLocationsByTime
+      parameters:
+      - name: location
+        in: query
+        description: String array of named locations
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: time
+        in: query
+        description: "[Optional] Start time for the data query."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2022-03-01T15:30:00Z
+        example: 2022-03-01T15:30:00Z
+      - name: toTime
+        in: query
+        description: "[Optional] End time for the data query."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2022-03-01T18:30:00Z
+        example: 2022-03-01T18:30:00Z
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmissionsData'
+                x-content-type: application/json
+            application/json; charset=utf-8:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmissionsData'
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+  /emissions/bylocation:
+    get:
+      tags:
+      - CarbonAware
+      summary: Calculate the best emission data by location for a specified time period.
+      operationId: GetEmissionsDataForLocationByTime
+      parameters:
+      - name: location
+        in: query
+        description: String named location.
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: startTime
+        in: query
+        description: "[Optional] Start time for the data query."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+      - name: endTime
+        in: query
+        description: "[Optional] End time for the data query."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmissionsData'
+                x-content-type: application/json
+            application/json; charset=utf-8:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmissionsData'
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+  /emissions/forecasts/current:
+    get:
+      tags:
+      - CarbonAware
+      summary: Retrieves the most recent forecasted data and calculates the optimal
+        marginal carbon intensity window.
+      description: "This endpoint fetches only the most recently generated forecast\
+        \ for all provided locations.  It uses the \"dataStartAt\" and \r\n\"dataEndAt\"\
+        \ parameters to scope the forecasted data points (if available for those times).\
+        \ If no start or end time \r\nboundaries are provided, the entire forecast\
+        \ dataset is used. The scoped data points are used to calculate average marginal\
+        \ \r\ncarbon intensities of the specified \"windowSize\" and the optimal marginal\
+        \ carbon intensity window is identified.\r\n            \r\nThe forecast data\
+        \ represents what the data source predicts future marginal carbon intesity\
+        \ values to be, \r\nnot actual measured emissions data (as future values cannot\
+        \ be known).\r\n            \r\nThis endpoint is useful for determining if\
+        \ there is a more carbon-optimal time to use electicity predicted in the future."
+      operationId: GetCurrentForecastData
+      parameters:
+      - name: location
+        in: query
+        description: String array of named locations
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: dataStartAt
+        in: query
+        description: "Start time boundary of forecasted data points.Ignores current\
+          \ forecast data points before this time.\r\nDefaults to the earliest time\
+          \ in the forecast data."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2022-03-01T15:30:00Z
+        example: 2022-03-01T15:30:00Z
+      - name: dataEndAt
+        in: query
+        description: "End time boundary of forecasted data points. Ignores current\
+          \ forecast data points after this time.\r\nDefaults to the latest time in\
+          \ the forecast data."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2022-03-01T18:30:00Z
+        example: 2022-03-01T18:30:00Z
+      - name: windowSize
+        in: query
+        description: "The estimated duration (in minutes) of the workload.\r\nDefaults\
+          \ to the duration of a single forecast data point."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+          example: 30
+        example: 30
+      responses:
+        "200":
+          description: Returns the requested forecast objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmissionsForecastDTO'
+                x-content-type: application/json
+            application/json; charset=utf-8:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmissionsForecastDTO'
+        "400":
+          description: Returned if any of the input parameters are invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+        "501":
+          description: Returned if the underlying data source does not support forecasting
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+  /emissions/forecasts/batch:
+    post:
+      tags:
+      - CarbonAware
+      summary: "Given an array of historical forecasts, retrieves the data that contains\r\
+        \nforecasts metadata, the optimal forecast and a range of forecasts filtered\
+        \ by the attributes [start...end] if provided."
+      description: "This endpoint takes a batch of requests for historical forecast\
+        \ data, fetches them, and calculates the optimal \r\nmarginal carbon intensity\
+        \ windows for each using the same parameters available to the '/emissions/forecasts/current'\r\
+        \nendpoint.\r\n            \r\nThis endpoint is useful for back-testing what\
+        \ one might have done in the past, if they had access to the \r\ncurrent forecast\
+        \ at the time."
+      operationId: BatchForecastDataAsync
+      requestBody:
+        description: Array of requested forecasts.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/EmissionsForecastBatchParametersDTO'
+          text/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/EmissionsForecastBatchParametersDTO'
+          application/*+json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/EmissionsForecastBatchParametersDTO'
+      responses:
+        "200":
+          description: Returns the requested forecast objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmissionsForecastDTO'
+                x-content-type: application/json
+            application/json; charset=utf-8:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmissionsForecastDTO'
+        "400":
+          description: Returned if any of the input parameters are invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+        "501":
+          description: Returned if the underlying data source does not support forecasting
+  /emissions/average-carbon-intensity:
+    get:
+      tags:
+      - CarbonAware
+      summary: Retrieves the measured carbon intensity data between the time boundaries
+        and calculates the average carbon intensity during that period.
+      description: This endpoint is useful for reporting the measured carbon intensity
+        for a specific time period in a specific location.
+      operationId: GetAverageCarbonIntensity
+      parameters:
+      - name: location
+        in: query
+        description: The location name where workflow is run
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: eastus
+        example: eastus
+      - name: startTime
+        in: query
+        description: The time at which the workflow we are measuring carbon intensity
+          for started
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2022-03-01T15:30:00Z
+        example: 2022-03-01T15:30:00Z
+      - name: endTime
+        in: query
+        description: The time at which the workflow we are measuring carbon intensity
+          for ended
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2022-03-01T18:30:00Z
+        example: 2022-03-01T18:30:00Z
+      responses:
+        "200":
+          description: Returns a single object that contains the information about
+            the request and the average marginal carbon intensity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarbonIntensityDTO'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/CarbonIntensityDTO'
+        "400":
+          description: Returned if any of the requested items are invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+  /emissions/average-carbon-intensity/batch:
+    post:
+      tags:
+      - CarbonAware
+      summary: "Given an array of request objects, each with their own location and\
+        \ time boundaries, calculate the average carbon intensity for that location\
+        \ and time period \r\nand return an array of carbon intensity objects."
+      description: "The application only supports batching across a single location\
+        \ with different time boundaries. If multiple locations are provided, an error\
+        \ is returned.\r\nFor each item in the request array, the application returns\
+        \ a corresponding object containing the location, time boundaries, and average\
+        \ marginal carbon intensity."
+      operationId: GetAverageCarbonIntensityBatch
+      requestBody:
+        description: "Array of inputs where each contains a \"location\", \"startDate\"\
+          , and \"endDate\" for which to calculate average marginal carbon intensity."
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CarbonIntensityBatchParametersDTO'
+          text/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CarbonIntensityBatchParametersDTO'
+          application/*+json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CarbonIntensityBatchParametersDTO'
+      responses:
+        "200":
+          description: "Returns an array of objects where each contains location,\
+            \ time boundaries and the corresponding average marginal carbon intensity"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CarbonIntensityDTO'
+                x-content-type: application/json
+            application/json; charset=utf-8:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CarbonIntensityDTO'
+        "400":
+          description: Returned if any of the requested items are invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+  /locations:
+    get:
+      tags:
+      - Locations
+      summary: Get all locations instances
+      operationId: GetAllLocations
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/Location'
+                x-content-type: application/json
+        "204":
+          description: No Content
+components:
+  schemas:
+    CarbonIntensityBatchParametersDTO:
+      type: object
+      properties:
+        location:
+          type: string
+          description: The location name where workflow is run
+          nullable: true
+          example: eastus
+        startTime:
+          type: string
+          description: The time at which the workflow we are measuring carbon intensity
+            for started
+          format: date-time
+          nullable: true
+          example: 2022-03-01T15:30:00Z
+        endTime:
+          type: string
+          description: The time at which the workflow we are measuring carbon intensity
+            for ended
+          format: date-time
+          nullable: true
+          example: 2022-03-01T18:30:00Z
+      additionalProperties: false
+    CarbonIntensityDTO:
+      type: object
+      properties:
+        location:
+          type: string
+          description: the location name where workflow is run
+          nullable: true
+          example: eastus
+        startTime:
+          type: string
+          description: the time at which the workflow we are measuring carbon intensity
+            for started
+          format: date-time
+          nullable: true
+          example: 2022-03-01T15:30:00Z
+        endTime:
+          type: string
+          description: the time at which the workflow we are measuring carbon intensity
+            for ended
+          format: date-time
+          nullable: true
+          example: 2022-03-01T18:30:00Z
+        carbonIntensity:
+          type: number
+          description: Value of the marginal carbon intensity in grams per kilowatt-hour.
+          format: double
+          example: 345.434
+      additionalProperties: false
+      example:
+        location: eastus
+        startTime: 2022-03-01T15:30:00Z
+        endTime: 2022-03-01T18:30:00Z
+        carbonIntensity: 345.434
+    EmissionsData:
+      type: object
+      properties:
+        location:
+          type: string
+          nullable: true
+        time:
+          type: string
+          format: date-time
+        rating:
+          type: number
+          format: double
+        duration:
+          type: string
+          format: time-span
+      additionalProperties: false
+      example:
+        duration: duration
+        rating: 0.80082819046101150206595775671303272247314453125
+        location: location
+        time: 2000-01-23T04:56:07.000+00:00
+    EmissionsDataDTO:
+      type: object
+      properties:
+        location:
+          type: string
+          nullable: true
+          example: eastus
+        timestamp:
+          type: string
+          format: date-time
+          example: 2022-06-01T14:45:00Z
+        duration:
+          type: integer
+          format: int32
+          example: 30
+        value:
+          type: number
+          format: double
+          example: 359.23
+      additionalProperties: false
+    EmissionsForecastBatchParametersDTO:
+      type: object
+      properties:
+        requestedAt:
+          type: string
+          description: "For historical forecast requests, this value is the timestamp\
+            \ used to access the most\r\nrecently generated forecast as of that time."
+          format: date-time
+          nullable: true
+          example: 2022-06-01T00:03:30Z
+        location:
+          type: string
+          description: The location of the forecast
+          nullable: true
+          example: eastus
+        dataStartAt:
+          type: string
+          description: "Start time boundary of forecasted data points.Ignores current\
+            \ forecast data points before this time.\r\nDefaults to the earliest time\
+            \ in the forecast data."
+          format: date-time
+          nullable: true
+          example: 2022-03-01T15:30:00Z
+        dataEndAt:
+          type: string
+          description: "End time boundary of forecasted data points. Ignores current\
+            \ forecast data points after this time.\r\nDefaults to the latest time\
+            \ in the forecast data."
+          format: date-time
+          nullable: true
+          example: 2022-03-01T18:30:00Z
+        windowSize:
+          type: integer
+          description: "The estimated duration (in minutes) of the workload.\r\nDefaults\
+            \ to the duration of a single forecast data point."
+          format: int32
+          nullable: true
+          example: 30
+      additionalProperties: false
+    EmissionsForecastDTO:
+      type: object
+      properties:
+        generatedAt:
+          type: string
+          description: Timestamp when the forecast was generated.
+          format: date-time
+          example: 2022-06-01T00:00:00Z
+        requestedAt:
+          type: string
+          description: "For current requests, this value is the timestamp the request\
+            \ for forecast data was made.\r\nFor historical forecast requests, this\
+            \ value is the timestamp used to access the most \r\nrecently generated\
+            \ forecast as of that time."
+          format: date-time
+          example: 2022-06-01T00:03:30Z
+        location:
+          type: string
+          description: The location of the forecast
+          nullable: true
+          example: eastus
+        dataStartAt:
+          type: string
+          description: "Start time boundary of forecasted data points. Ignores forecast\
+            \ data points before this time.\r\nDefaults to the earliest time in the\
+            \ forecast data."
+          format: date-time
+          example: 2022-06-01T12:00:00Z
+        dataEndAt:
+          type: string
+          description: "End time boundary of forecasted data points. Ignores forecast\
+            \ data points after this time.\r\nDefaults to the latest time in the forecast\
+            \ data."
+          format: date-time
+          example: 2022-06-01T18:00:00Z
+        windowSize:
+          type: integer
+          description: "The estimated duration (in minutes) of the workload.\r\nDefaults\
+            \ to the duration of a single forecast data point."
+          format: int32
+          example: 30
+        optimalDataPoints:
+          type: array
+          description: "The optimal forecasted data point within the 'forecastData'\
+            \ array.\r\nNull if 'forecastData' array is empty."
+          nullable: true
+          example:
+            location: eastus
+            timestamp: 2022-06-01T14:45:00Z
+            duration: 30
+            value: 359.23
+          items:
+            $ref: '#/components/schemas/EmissionsDataDTO'
+        forecastData:
+          type: array
+          description: "The forecasted data points transformed and filtered to reflect\
+            \ the specified time and window parameters.\r\nPoints are ordered chronologically;\
+            \ Empty array if all data points were filtered out.\r\nE.G. dataStartAt\
+            \ and dataEndAt times outside the forecast period; windowSize greater\
+            \ than total duration of forecast data;"
+          nullable: true
+          example:
+          - location: eastus
+            timestamp: 2022-06-01T14:40:00Z
+            duration: 30
+            value: 380.99
+          - location: eastus
+            timestamp: 2022-06-01T14:45:00Z
+            duration: 30
+            value: 359.23
+          - location: eastus
+            timestamp: 2022-06-01T14:50:00Z
+            duration: 30
+            value: 375.12
+          items:
+            $ref: '#/components/schemas/EmissionsDataDTO'
+      additionalProperties: false
+      example:
+        dataEndAt: 2022-06-01T18:00:00Z
+        windowSize: 30
+        forecastData:
+        - location: eastus
+          timestamp: 2022-06-01T14:40:00Z
+          duration: 30
+          value: 380.99
+        - location: eastus
+          timestamp: 2022-06-01T14:45:00Z
+          duration: 30
+          value: 359.23
+        - location: eastus
+          timestamp: 2022-06-01T14:50:00Z
+          duration: 30
+          value: 375.12
+        requestedAt: 2022-06-01T00:03:30Z
+        generatedAt: 2022-06-01T00:00:00Z
+        optimalDataPoints:
+          location: eastus
+          timestamp: 2022-06-01T14:45:00Z
+          duration: 30
+          value: 359.23
+        location: eastus
+        dataStartAt: 2022-06-01T12:00:00Z
+    Location:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        name:
+          type: string
+          nullable: true
+      additionalProperties: false
+      example:
+        latitude: 0.80082819046101150206595775671303272247314453125
+        name: name
+        longitude: 6.02745618307040320615897144307382404804229736328125
+    ValidationProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          format: int32
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        instance:
+          type: string
+          nullable: true
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          nullable: true
+          readOnly: true
+      additionalProperties: {}
+      x-schema-name: ValidationProblemDetails
