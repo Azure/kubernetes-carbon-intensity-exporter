@@ -1,6 +1,8 @@
 REGISTRY ?= ghcr.io
 SERVER_IMG_NAME ?= server
-SERVERIMG_TAG ?= 0.1.0
+SERVER_IMG_TAG ?= 0.1.0
+EXPORTER_IMG_NAME ?= exporter
+EXPORTER_IMG_TAG ?= 0.1.0
 
 OUTPUT_TYPE ?= type=docker
 BUILDPLATFORM ?= linux/amd64
@@ -22,8 +24,17 @@ docker-build-server-image: docker-buildx-builder
 		--output=$(OUTPUT_TYPE) \
 		--platform="$(BUILDPLATFORM)" \
 		--pull \
-		--tag $(REGISTRY)/$(SERVER_IMG_NAME):$(SERVERIMG_TAG) .
+		--tag $(REGISTRY)/$(SERVER_IMG_NAME):$(SERVER_IMG_TAG) .
+
+.PHONY: docker-build-exporter-image
+docker-build-exporter-image: docker-buildx-builder
+	 docker buildx build \
+		--file docker/carbon-data-exporter/Dockerfile \
+		--output=$(OUTPUT_TYPE) \
+		--platform="$(BUILDPLATFORM)" \
+		--pull \
+		--tag $(REGISTRY)/$(EXPORTER_IMG_NAME):$(EXPORTER_IMG_TAG) .
 
 
 build:
-	go build -o _output/bin/carbon-data-provider ./cmd/carbon-data-provider/
+	go build -o _output/bin/exporter ./cmd/exporter/

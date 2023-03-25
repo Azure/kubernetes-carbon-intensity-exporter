@@ -8,7 +8,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/component-base/logs"
 
-	"github.com/Azure/sustainability/carbon-aware/cmd/carbon-data-provider/app"
+	exporterapp "github.com/Azure/kubernetes-carbon-intensity-exporter/cmd/exporter/app"
 )
 
 func mainMethod() error {
@@ -19,7 +19,7 @@ func mainMethod() error {
 
 	stopChan := genericapiserver.SetupSignalHandler()
 
-	return app.NewProviderCommand(stopChan).Execute()
+	return exporterapp.NewExporterCommand(stopChan).Execute()
 }
 
 func main() {

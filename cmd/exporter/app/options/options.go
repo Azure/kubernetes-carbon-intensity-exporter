@@ -15,10 +15,10 @@ import (
 	componentbaseconfig "k8s.io/component-base/config"
 	"k8s.io/klog/v2"
 
-	providerconfig "github.com/Azure/sustainability/carbon-aware/cmd/carbon-data-provider/app/config"
+	exporterconfig "github.com/Azure/kubernetes-carbon-intensity-exporter/cmd/exporter/app/config"
 )
 
-type ProviderOptions struct {
+type ExporterOptions struct {
 	ClientConnection componentbaseconfig.ClientConnectionConfiguration
 	Timeout          string
 
@@ -30,10 +30,10 @@ type ProviderOptions struct {
 }
 
 // NewResourceSyncerOptions creates a new resource syncer with a default config.
-func NewProviderOptions() (*ProviderOptions, error) {
-	return &ProviderOptions{
+func NewExporterOptions() (*ExporterOptions, error) {
+	return &ExporterOptions{
 		ClientConnection: componentbaseconfig.ClientConnectionConfiguration{},
-		Name:             "carbon-data-provider",
+		Name:             "carbon-data-exporter",
 		Address:          "",
 		Port:             "80",
 		CertFile:         "",
@@ -41,7 +41,7 @@ func NewProviderOptions() (*ProviderOptions, error) {
 	}, nil
 }
 
-func (o *ProviderOptions) Flags() cliflag.NamedFlagSets {
+func (o *ExporterOptions) Flags() cliflag.NamedFlagSets {
 	fss := cliflag.NamedFlagSets{}
 
 	fs := fss.FlagSet("server")
@@ -57,8 +57,8 @@ func (o *ProviderOptions) Flags() cliflag.NamedFlagSets {
 }
 
 // Config return a syncer config object
-func (o *ProviderOptions) Config() (*providerconfig.Config, error) {
-	c := &providerconfig.Config{}
+func (o *ExporterOptions) Config() (*exporterconfig.Config, error) {
+	c := &exporterconfig.Config{}
 
 	// Prepare kube clients
 	var (
@@ -69,14 +69,14 @@ func (o *ProviderOptions) Config() (*providerconfig.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	clusterClient, err := clientset.NewForConfig(restclient.AddUserAgent(restConfig, "carbon-data-provider"))
+	clusterClient, err := clientset.NewForConfig(restclient.AddUserAgent(restConfig, "carbon-data-exporter"))
 	if err != nil {
 		return nil, err
 	}
 
 	// Prepare event clients.
 	eventBroadcaster := record.NewBroadcaster()
-	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: "carbon-data-provider"})
+	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: "carbon-data-exporter"})
 
 	c.Kubeconfig = restConfig
 	c.ClusterClient = clusterClient

@@ -1,4 +1,4 @@
-package provider
+package exporter
 
 import (
 	"time"
@@ -14,25 +14,25 @@ const (
 	patrolInterval = time.Second * 1200
 )
 
-type Provider struct {
+type Exporter struct {
 	clusterClient clientset.Interface
 
 	recorder record.EventRecorder
 }
 
-func New(clusterClient clientset.Interface, recorder record.EventRecorder) (*Provider, error) {
-	b := &Provider{
+func New(clusterClient clientset.Interface, recorder record.EventRecorder) (*Exporter, error) {
+	b := &Exporter{
 		clusterClient: clusterClient,
 		recorder:      recorder,
 	}
 	return b, nil
 }
 
-func (b *Provider) Run(stopChan <-chan struct{}) {
+func (b *Exporter) Run(stopChan <-chan struct{}) {
 	go wait.Until(b.Patrol, patrolInterval, stopChan)
 }
 
-func (b *Provider) Patrol() {
+func (b *Exporter) Patrol() {
 
 	/*
 	   Calling SDK to get 24 hours foreceast data,
@@ -41,7 +41,7 @@ func (b *Provider) Patrol() {
 	b.recorder.Eventf(&corev1.ObjectReference{
 		Kind:      "Pod",
 		Namespace: "kube-system",
-		Name:      "carbon-data-provider", // TODO: replace this with the actual Pod name, passed through the downward API.
-	}, corev1.EventTypeNormal, "Provider results", "Done retrieve data")
+		Name:      "carbon-data-exporter", // TODO: replace this with the actual Pod name, passed through the downward API.
+	}, corev1.EventTypeNormal, "Exporter results", "Done retrieve data")
 
 }
