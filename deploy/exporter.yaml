@@ -5,7 +5,7 @@ metadata:
 spec:
  containers:
  - name: server
-   image: ghcr.io/azure/kubernetes-carbon-intensity-exporter/server:0.1.0
+   image: ghcr.io/azure/kubernetes-carbon-intensity-exporter/exporter:0.1.0
    imagePullPolicy: Always
    command: [
      "sh",

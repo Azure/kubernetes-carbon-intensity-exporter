@@ -16,7 +16,6 @@ env:
   # Common versions
   GO_VERSION: '1.19'
   
-  SERVER_IMAGE_NAME: 'server'
   SERVER_IMG_TAG : '0.1.0'
 
 jobs:
@@ -39,8 +38,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          submodules: true
+          fetch-depth: 0
       - name: Login to ${{ env.REGISTRY }}
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
@@ -49,6 +48,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push images
         run: |
-          OUTPUT_TYPE=type=registry make  docker-build-server-image
+          OUTPUT_TYPE=type=registry make docker-build-server-image
         env:
           SERVER_IMG_TAG: ${{ env.SERVER_IMG_TAG }}

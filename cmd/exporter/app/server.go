@@ -16,23 +16,23 @@ import (
 	"k8s.io/component-base/version/verflag"
 	"k8s.io/klog/v2"
 
-	providerconfig "github.com/Azure/sustainability/carbon-aware/cmd/carbon-data-provider/app/config"
-	"github.com/Azure/sustainability/carbon-aware/cmd/carbon-data-provider/app/options"
-	"github.com/Azure/sustainability/carbon-aware/pkg/provider"
+	exporterconfig "github.com/Azure/kubernetes-carbon-intensity-exporter/cmd/exporter/app/config"
+	"github.com/Azure/kubernetes-carbon-intensity-exporter/cmd/exporter/app/options"
+	"github.com/Azure/kubernetes-carbon-intensity-exporter/pkg/exporter"
 )
 
-func NewProviderCommand(stopChan <-chan struct{}) *cobra.Command {
-	s, err := options.NewProviderOptions()
+func NewExporterCommand(stopChan <-chan struct{}) *cobra.Command {
+	s, err := options.NewExporterOptions()
 	if err != nil {
 		klog.Fatalf("unable to initialize command options: %v", err)
 	}
 
 	cmd := &cobra.Command{
-		Use:  "carbon-data-provider",
-		Long: `The carbon-data-provider is a controller that pulls carbon intensity data from ADLS`,
+		Use:  "carbon-data-exporter",
+		Long: `The carbon-data-exporter is a controller that pulls carbon intensity data from ADLS`,
 		Run: func(cmd *cobra.Command, args []string) {
 			var err error
-			var c *providerconfig.Config
+			var c *exporterconfig.Config
 			verflag.PrintAndExitIfRequested()
 
 			c, err = s.Config()
@@ -71,8 +71,8 @@ func NewProviderCommand(stopChan <-chan struct{}) *cobra.Command {
 	return cmd
 }
 
-func Run(cc *providerconfig.CompletedConfig, stopCh <-chan struct{}) error {
-	p, err := provider.New(cc.ClusterClient, cc.Recorder)
+func Run(cc *exporterconfig.CompletedConfig, stopCh <-chan struct{}) error {
+	p, err := exporter.New(cc.ClusterClient, cc.Recorder)
 
 	if err != nil {
 		return fmt.Errorf("new syncer: %v", err)
@@ -93,7 +93,7 @@ func Run(cc *providerconfig.CompletedConfig, stopCh <-chan struct{}) error {
 	defer cancel()
 
 	// Prepare a reusable runCommand function.
-	run := startProvider(p, stopCh)
+	run := startExporter(p, stopCh)
 
 	go func() {
 		select {
@@ -119,7 +119,7 @@ func Run(cc *providerconfig.CompletedConfig, stopCh <-chan struct{}) error {
 	return fmt.Errorf("finished without leader elect")
 }
 
-func startProvider(p *provider.Provider, stopCh <-chan struct{}) func(context.Context) {
+func startExporter(p *exporter.Exporter, stopCh <-chan struct{}) func(context.Context) {
 	return func(ctx context.Context) {
 		p.Run(stopCh)
 		<-ctx.Done()
