@@ -17,6 +17,7 @@ env:
   GO_VERSION: '1.19'
   
   SERVER_IMG_TAG : '0.1.0'
+  EXPORTER_IMG_TAG: '0.1.0'
 
 jobs:
   export-registry:
@@ -48,6 +49,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push images
         run: |
-          OUTPUT_TYPE=type=registry make docker-build-server-image
+          OUTPUT_TYPE=type=registry make docker-build-server-image docker-build-exporter-image
         env:
           SERVER_IMG_TAG: ${{ env.SERVER_IMG_TAG }}
+          EXPORTER_IMG_TAG: ${{ env.EXPORTER_IMG_TAG }}

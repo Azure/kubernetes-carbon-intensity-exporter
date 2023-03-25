@@ -29,7 +29,7 @@ func NewExporterCommand(stopChan <-chan struct{}) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:  "carbon-data-exporter",
-		Long: `The carbon-data-exporter is a controller that pulls carbon intensity data from ADLS`,
+		Long: `The carbon-data-exporter is a controller that pulls carbon intensity data from GSF API server`,
 		Run: func(cmd *cobra.Command, args []string) {
 			var err error
 			var c *exporterconfig.Config

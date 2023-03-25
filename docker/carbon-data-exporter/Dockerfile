@@ -10,12 +10,12 @@ COPY go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY cmd/exporter/ exporter/
+COPY cmd/exporter/ cmd/exporter/
 COPY pkg/ pkg/
 
 # Build
 ARG TARGETARCH
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -o exporter exporter/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -o exporter cmd/exporter/main.go
 
 # Use distroless as minimal base image to package the exporter binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
