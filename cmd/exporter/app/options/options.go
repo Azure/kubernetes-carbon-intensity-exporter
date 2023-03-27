@@ -1,3 +1,7 @@
+/*
+MIT License
+Copyright (c) Microsoft Corporation.
+*/
 package options
 
 import (

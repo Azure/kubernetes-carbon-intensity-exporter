@@ -2,15 +2,15 @@
 
 All URIs are relative to *https://virtserver.swaggerhub.com/Microsoft-hela/carbonaware/1.0.0*
 
-Method | HTTP request | Description
-------------- | ------------- | -------------
-[**BatchForecastDataAsync**](CarbonAwareApi.md#BatchForecastDataAsync) | **Post** /emissions/forecasts/batch | Given an array of historical forecasts, retrieves the data that contains  forecasts metadata, the optimal forecast and a range of forecasts filtered by the attributes [start...end] if provided.
-[**GetAverageCarbonIntensity**](CarbonAwareApi.md#GetAverageCarbonIntensity) | **Get** /emissions/average-carbon-intensity | Retrieves the measured carbon intensity data between the time boundaries and calculates the average carbon intensity during that period.
-[**GetAverageCarbonIntensityBatch**](CarbonAwareApi.md#GetAverageCarbonIntensityBatch) | **Post** /emissions/average-carbon-intensity/batch | Given an array of request objects, each with their own location and time boundaries, calculate the average carbon intensity for that location and time period   and return an array of carbon intensity objects.
-[**GetBestEmissionsDataForLocationsByTime**](CarbonAwareApi.md#GetBestEmissionsDataForLocationsByTime) | **Get** /emissions/bylocations/best | Calculate the best emission data by list of locations for a specified time period.
-[**GetCurrentForecastData**](CarbonAwareApi.md#GetCurrentForecastData) | **Get** /emissions/forecasts/current | Retrieves the most recent forecasted data and calculates the optimal marginal carbon intensity window.
-[**GetEmissionsDataForLocationByTime**](CarbonAwareApi.md#GetEmissionsDataForLocationByTime) | **Get** /emissions/bylocation | Calculate the best emission data by location for a specified time period.
-[**GetEmissionsDataForLocationsByTime**](CarbonAwareApi.md#GetEmissionsDataForLocationsByTime) | **Get** /emissions/bylocations | Calculate the observed emission data by list of locations for a specified time period.
+| Method                                                                                                 | HTTP request                                       | Description                                                                                                                                                                                                      |
+|--------------------------------------------------------------------------------------------------------|----------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [**BatchForecastDataAsync**](CarbonAwareApi.md#BatchForecastDataAsync)                                 | **Post** /emissions/forecasts/batch                | Given an array of historical forecasts, retrieves the data that contains  forecasts metadata, the optimal forecast and a range of forecasts filtered by the attributes [start...end] if provided.                |
+| [**GetAverageCarbonIntensity**](CarbonAwareApi.md#GetAverageCarbonIntensity)                           | **Get** /emissions/average-carbon-intensity        | Retrieves the measured carbon intensity data between the time boundaries and calculates the average carbon intensity during that period.                                                                         |
+| [**GetAverageCarbonIntensityBatch**](CarbonAwareApi.md#GetAverageCarbonIntensityBatch)                 | **Post** /emissions/average-carbon-intensity/batch | Given an array of request objects, each with their own location and time boundaries, calculate the average carbon intensity for that location and time period   and return an array of carbon intensity objects. |
+| [**GetBestEmissionsDataForLocationsByTime**](CarbonAwareApi.md#GetBestEmissionsDataForLocationsByTime) | **Get** /emissions/bylocations/best                | Calculate the best emission data by list of locations for a specified time period.                                                                                                                               |
+| [**GetCurrentForecastData**](CarbonAwareApi.md#GetCurrentForecastData)                                 | **Get** /emissions/forecasts/current               | Retrieves the most recent forecasted data and calculates the optimal marginal carbon intensity window.                                                                                                           |
+| [**GetEmissionsDataForLocationByTime**](CarbonAwareApi.md#GetEmissionsDataForLocationByTime)           | **Get** /emissions/bylocation                      | Calculate the best emission data by location for a specified time period.                                                                                                                                        |
+| [**GetEmissionsDataForLocationsByTime**](CarbonAwareApi.md#GetEmissionsDataForLocationsByTime)         | **Get** /emissions/bylocations                     | Calculate the observed emission data by list of locations for a specified time period.                                                                                                                           |
 
 # **BatchForecastDataAsync**
 > []EmissionsForecastDto BatchForecastDataAsync(ctx, optional)
@@ -20,10 +20,10 @@ This endpoint takes a batch of requests for historical forecast data, fetches th
 
 ### Required Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
- **optional** | ***CarbonAwareApiBatchForecastDataAsyncOpts** | optional parameters | nil if no parameters
+| Name         | Type                                          | Description                                                                 | Notes                |
+|--------------|-----------------------------------------------|-----------------------------------------------------------------------------|----------------------|
+| **ctx**      | **context.Context**                           | context for authentication, logging, cancellation, deadlines, tracing, etc. |                      |
+| **optional** | ***CarbonAwareApiBatchForecastDataAsyncOpts** | optional parameters                                                         | nil if no parameters |
 
 ### Optional Parameters
 Optional parameters are passed through a pointer to a CarbonAwareApiBatchForecastDataAsyncOpts struct
@@ -54,12 +54,12 @@ This endpoint is useful for reporting the measured carbon intensity for a specif
 
 ### Required Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-  **location** | **string**| The location name where workflow is run | 
-  **startTime** | **time.Time**| The time at which the workflow we are measuring carbon intensity for started | 
-  **endTime** | **time.Time**| The time at which the workflow we are measuring carbon intensity for ended | 
+| Name          | Type                | Description                                                                  | Notes |
+|---------------|---------------------|------------------------------------------------------------------------------|-------|
+| **ctx**       | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.  |       |
+| **location**  | **string**          | The location name where workflow is run                                      |       |
+| **startTime** | **time.Time**       | The time at which the workflow we are measuring carbon intensity for started |       |
+| **endTime**   | **time.Time**       | The time at which the workflow we are measuring carbon intensity for ended   |       |
 
 ### Return type
 
@@ -84,10 +84,10 @@ The application only supports batching across a single location with different t
 
 ### Required Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
- **optional** | ***CarbonAwareApiGetAverageCarbonIntensityBatchOpts** | optional parameters | nil if no parameters
+| Name         | Type                                                  | Description                                                                 | Notes                |
+|--------------|-------------------------------------------------------|-----------------------------------------------------------------------------|----------------------|
+| **ctx**      | **context.Context**                                   | context for authentication, logging, cancellation, deadlines, tracing, etc. |                      |
+| **optional** | ***CarbonAwareApiGetAverageCarbonIntensityBatchOpts** | optional parameters                                                         | nil if no parameters |
 
 ### Optional Parameters
 Optional parameters are passed through a pointer to a CarbonAwareApiGetAverageCarbonIntensityBatchOpts struct
@@ -116,11 +116,11 @@ Calculate the best emission data by list of locations for a specified time perio
 
 ### Required Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-  **location** | [**[]string**](string.md)| String array of named locations | 
- **optional** | ***CarbonAwareApiGetBestEmissionsDataForLocationsByTimeOpts** | optional parameters | nil if no parameters
+| Name         | Type                                                          | Description                                                                 | Notes                |
+|--------------|---------------------------------------------------------------|-----------------------------------------------------------------------------|----------------------|
+| **ctx**      | **context.Context**                                           | context for authentication, logging, cancellation, deadlines, tracing, etc. |                      |
+| **location** | [**[]string**](string.md)                                     | String array of named locations                                             |                      |
+| **optional** | ***CarbonAwareApiGetBestEmissionsDataForLocationsByTimeOpts** | optional parameters                                                         | nil if no parameters |
 
 ### Optional Parameters
 Optional parameters are passed through a pointer to a CarbonAwareApiGetBestEmissionsDataForLocationsByTimeOpts struct
@@ -153,11 +153,11 @@ This endpoint fetches only the most recently generated forecast for all provided
 
 ### Required Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-  **location** | [**[]string**](string.md)| String array of named locations | 
- **optional** | ***CarbonAwareApiGetCurrentForecastDataOpts** | optional parameters | nil if no parameters
+| Name         | Type                                          | Description                                                                 | Notes                |
+|--------------|-----------------------------------------------|-----------------------------------------------------------------------------|----------------------|
+| **ctx**      | **context.Context**                           | context for authentication, logging, cancellation, deadlines, tracing, etc. |                      |
+| **location** | [**[]string**](string.md)                     | String array of named locations                                             |                      |
+| **optional** | ***CarbonAwareApiGetCurrentForecastDataOpts** | optional parameters                                                         | nil if no parameters |
 
 ### Optional Parameters
 Optional parameters are passed through a pointer to a CarbonAwareApiGetCurrentForecastDataOpts struct
@@ -189,11 +189,11 @@ Calculate the best emission data by location for a specified time period.
 
 ### Required Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-  **location** | **string**| String named location. | 
- **optional** | ***CarbonAwareApiGetEmissionsDataForLocationByTimeOpts** | optional parameters | nil if no parameters
+| Name         | Type                                                     | Description                                                                 | Notes                |
+|--------------|----------------------------------------------------------|-----------------------------------------------------------------------------|----------------------|
+| **ctx**      | **context.Context**                                      | context for authentication, logging, cancellation, deadlines, tracing, etc. |                      |
+| **location** | **string**                                               | String named location.                                                      |                      |
+| **optional** | ***CarbonAwareApiGetEmissionsDataForLocationByTimeOpts** | optional parameters                                                         | nil if no parameters |
 
 ### Optional Parameters
 Optional parameters are passed through a pointer to a CarbonAwareApiGetEmissionsDataForLocationByTimeOpts struct
@@ -224,11 +224,11 @@ Calculate the observed emission data by list of locations for a specified time p
 
 ### Required Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-  **location** | [**[]string**](string.md)| String array of named locations | 
- **optional** | ***CarbonAwareApiGetEmissionsDataForLocationsByTimeOpts** | optional parameters | nil if no parameters
+| Name         | Type                                                      | Description                                                                 | Notes                |
+|--------------|-----------------------------------------------------------|-----------------------------------------------------------------------------|----------------------|
+| **ctx**      | **context.Context**                                       | context for authentication, logging, cancellation, deadlines, tracing, etc. |                      |
+| **location** | [**[]string**](string.md)                                 | String array of named locations                                             |                      |
+| **optional** | ***CarbonAwareApiGetEmissionsDataForLocationsByTimeOpts** | optional parameters                                                         | nil if no parameters |
 
 ### Optional Parameters
 Optional parameters are passed through a pointer to a CarbonAwareApiGetEmissionsDataForLocationsByTimeOpts struct
