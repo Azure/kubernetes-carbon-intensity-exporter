@@ -1,3 +1,7 @@
+/*
+MIT License
+Copyright (c) Microsoft Corporation.
+*/
 package main
 
 import (
@@ -23,6 +27,8 @@ func mainMethod() error {
 }
 
 func main() {
+
+	time.Sleep(10 * time.Second)
 	if mainMethod() != nil {
 		os.Exit(1)
 	}

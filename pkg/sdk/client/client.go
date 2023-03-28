@@ -137,7 +137,8 @@ func parameterToString(obj interface{}, collectionFormat string) string {
 	}
 
 	if reflect.TypeOf(obj).Kind() == reflect.Slice {
-		return strings.Trim(strings.Replace(fmt.Sprint(obj), " ", delimiter, -1), "[]")
+		replacedStr := strings.Replace(fmt.Sprint(obj), " ", delimiter, -1)
+		return strings.Replace(strings.Trim(replacedStr, "[]"), " ", delimiter, -1)
 	}
 
 	return fmt.Sprintf("%v", obj)
@@ -315,7 +316,7 @@ func (c *APIClient) decode(v interface{}, b []byte, contentType string) (err err
 			return err
 		}
 		return nil
-	} else if strings.Contains(contentType, "application/json") {
+	} else if strings.Contains(contentType, "application/json") || strings.Contains(contentType, "application/problem+json") {
 		if err = json.Unmarshal(b, v); err != nil {
 			return err
 		}

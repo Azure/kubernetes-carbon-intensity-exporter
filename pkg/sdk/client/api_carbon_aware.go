@@ -8,7 +8,7 @@ package client
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,6 +20,8 @@ import (
 // Linger please
 var (
 	_ context.Context
+	// to determine the Accept header
+	localVarHttpHeaderAccepts = []string{"application/json", "application/json; charset=utf-8", "application/problem+json; charset=utf-8"}
 )
 
 type CarbonAwareApiService service
@@ -62,9 +64,6 @@ func (a *CarbonAwareApiService) BatchForecastDataAsync(ctx context.Context, loca
 		localVarHeaderParams["Content-Type"] = localVarHttpContentType
 	}
 
-	// to determine the Accept header
-	localVarHttpHeaderAccepts := []string{"application/json", "application/json; charset=utf-8"}
-
 	// set Accept header
 	localVarHttpHeaderAccept := selectHeaderAccept(localVarHttpHeaderAccepts)
 	if localVarHttpHeaderAccept != "" {
@@ -86,7 +85,7 @@ func (a *CarbonAwareApiService) BatchForecastDataAsync(ctx context.Context, loca
 		return localVarReturnValue, localVarHttpResponse, err
 	}
 
-	localVarBody, err := ioutil.ReadAll(localVarHttpResponse.Body)
+	localVarBody, err := io.ReadAll(localVarHttpResponse.Body)
 	localVarHttpResponse.Body.Close()
 	if err != nil {
 		return localVarReturnValue, localVarHttpResponse, err
@@ -168,8 +167,12 @@ func (a *CarbonAwareApiService) GetAverageCarbonIntensity(ctx context.Context, l
 	localVarFormParams := url.Values{}
 
 	localVarQueryParams.Add("location", parameterToString(location, ""))
-	localVarQueryParams.Add("startTime", parameterToString(startTime, ""))
-	localVarQueryParams.Add("endTime", parameterToString(endTime, ""))
+
+	cutStartDate, _, _ := strings.Cut(parameterToString(startTime, ""), " ")
+	localVarQueryParams.Add("startTime", cutStartDate)
+
+	cutEndDate, _, _ := strings.Cut(parameterToString(endTime, ""), " ")
+	localVarQueryParams.Add("endTime", cutEndDate)
 	// to determine the Content-Type header
 	localVarHttpContentTypes := []string{}
 
@@ -178,9 +181,6 @@ func (a *CarbonAwareApiService) GetAverageCarbonIntensity(ctx context.Context, l
 	if localVarHttpContentType != "" {
 		localVarHeaderParams["Content-Type"] = localVarHttpContentType
 	}
-
-	// to determine the Accept header
-	localVarHttpHeaderAccepts := []string{"application/json", "application/json; charset=utf-8"}
 
 	// set Accept header
 	localVarHttpHeaderAccept := selectHeaderAccept(localVarHttpHeaderAccepts)
@@ -197,7 +197,7 @@ func (a *CarbonAwareApiService) GetAverageCarbonIntensity(ctx context.Context, l
 		return localVarReturnValue, localVarHttpResponse, err
 	}
 
-	localVarBody, err := ioutil.ReadAll(localVarHttpResponse.Body)
+	localVarBody, err := io.ReadAll(localVarHttpResponse.Body)
 	localVarHttpResponse.Body.Close()
 	if err != nil {
 		return localVarReturnValue, localVarHttpResponse, err
@@ -290,9 +290,6 @@ func (a *CarbonAwareApiService) GetAverageCarbonIntensityBatch(ctx context.Conte
 		localVarHeaderParams["Content-Type"] = localVarHttpContentType
 	}
 
-	// to determine the Accept header
-	localVarHttpHeaderAccepts := []string{"application/json", "application/json; charset=utf-8"}
-
 	// set Accept header
 	localVarHttpHeaderAccept := selectHeaderAccept(localVarHttpHeaderAccepts)
 	if localVarHttpHeaderAccept != "" {
@@ -314,7 +311,7 @@ func (a *CarbonAwareApiService) GetAverageCarbonIntensityBatch(ctx context.Conte
 		return localVarReturnValue, localVarHttpResponse, err
 	}
 
-	localVarBody, err := ioutil.ReadAll(localVarHttpResponse.Body)
+	localVarBody, err := io.ReadAll(localVarHttpResponse.Body)
 	localVarHttpResponse.Body.Close()
 	if err != nil {
 		return localVarReturnValue, localVarHttpResponse, err
@@ -416,9 +413,6 @@ func (a *CarbonAwareApiService) GetBestEmissionsDataForLocationsByTime(ctx conte
 		localVarHeaderParams["Content-Type"] = localVarHttpContentType
 	}
 
-	// to determine the Accept header
-	localVarHttpHeaderAccepts := []string{"application/json", "application/json; charset=utf-8"}
-
 	// set Accept header
 	localVarHttpHeaderAccept := selectHeaderAccept(localVarHttpHeaderAccepts)
 	if localVarHttpHeaderAccept != "" {
@@ -434,7 +428,7 @@ func (a *CarbonAwareApiService) GetBestEmissionsDataForLocationsByTime(ctx conte
 		return localVarReturnValue, localVarHttpResponse, err
 	}
 
-	localVarBody, err := ioutil.ReadAll(localVarHttpResponse.Body)
+	localVarBody, err := io.ReadAll(localVarHttpResponse.Body)
 	localVarHttpResponse.Body.Close()
 	if err != nil {
 		return localVarReturnValue, localVarHttpResponse, err
@@ -513,12 +507,14 @@ func (a *CarbonAwareApiService) GetCurrentForecastData(ctx context.Context, loca
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
-	localVarQueryParams.Add("location", parameterToString(location, "multi"))
+	localVarQueryParams.Add("location", parameterToString(location, ""))
 	if localVarOptionals != nil && localVarOptionals.DataStartAt.IsSet() {
-		localVarQueryParams.Add("dataStartAt", parameterToString(localVarOptionals.DataStartAt.Value(), ""))
+		cutDate, _, _ := strings.Cut(parameterToString(localVarOptionals.DataStartAt.Value(), ""), "UTC")
+		localVarQueryParams.Add("dataStartAt", cutDate)
 	}
 	if localVarOptionals != nil && localVarOptionals.DataEndAt.IsSet() {
-		localVarQueryParams.Add("dataEndAt", parameterToString(localVarOptionals.DataEndAt.Value(), ""))
+		cutDate, _, _ := strings.Cut(parameterToString(localVarOptionals.DataEndAt.Value(), ""), "UTC")
+		localVarQueryParams.Add("dataEndAt", cutDate)
 	}
 	if localVarOptionals != nil && localVarOptionals.WindowSize.IsSet() {
 		localVarQueryParams.Add("windowSize", parameterToString(localVarOptionals.WindowSize.Value(), ""))
@@ -531,9 +527,6 @@ func (a *CarbonAwareApiService) GetCurrentForecastData(ctx context.Context, loca
 	if localVarHttpContentType != "" {
 		localVarHeaderParams["Content-Type"] = localVarHttpContentType
 	}
-
-	// to determine the Accept header
-	localVarHttpHeaderAccepts := []string{"application/json", "application/json; charset=utf-8"}
 
 	// set Accept header
 	localVarHttpHeaderAccept := selectHeaderAccept(localVarHttpHeaderAccepts)
@@ -550,7 +543,7 @@ func (a *CarbonAwareApiService) GetCurrentForecastData(ctx context.Context, loca
 		return localVarReturnValue, localVarHttpResponse, err
 	}
 
-	localVarBody, err := ioutil.ReadAll(localVarHttpResponse.Body)
+	localVarBody, err := io.ReadAll(localVarHttpResponse.Body)
 	localVarHttpResponse.Body.Close()
 	if err != nil {
 		return localVarReturnValue, localVarHttpResponse, err
@@ -648,10 +641,12 @@ func (a *CarbonAwareApiService) GetEmissionsDataForLocationByTime(ctx context.Co
 
 	localVarQueryParams.Add("location", parameterToString(location, ""))
 	if localVarOptionals != nil && localVarOptionals.StartTime.IsSet() {
-		localVarQueryParams.Add("startTime", parameterToString(localVarOptionals.StartTime.Value(), ""))
+		cutDate, _, _ := strings.Cut(parameterToString(localVarOptionals.StartTime.Value(), ""), "UTC")
+		localVarQueryParams.Add("startTime", cutDate)
 	}
 	if localVarOptionals != nil && localVarOptionals.EndTime.IsSet() {
-		localVarQueryParams.Add("endTime", parameterToString(localVarOptionals.EndTime.Value(), ""))
+		cutDate, _, _ := strings.Cut(parameterToString(localVarOptionals.EndTime.Value(), ""), "UTC")
+		localVarQueryParams.Add("endTime", cutDate)
 	}
 	// to determine the Content-Type header
 	localVarHttpContentTypes := []string{}
@@ -661,9 +656,6 @@ func (a *CarbonAwareApiService) GetEmissionsDataForLocationByTime(ctx context.Co
 	if localVarHttpContentType != "" {
 		localVarHeaderParams["Content-Type"] = localVarHttpContentType
 	}
-
-	// to determine the Accept header
-	localVarHttpHeaderAccepts := []string{"application/json", "application/json; charset=utf-8"}
 
 	// set Accept header
 	localVarHttpHeaderAccept := selectHeaderAccept(localVarHttpHeaderAccepts)
@@ -680,7 +672,7 @@ func (a *CarbonAwareApiService) GetEmissionsDataForLocationByTime(ctx context.Co
 		return localVarReturnValue, localVarHttpResponse, err
 	}
 
-	localVarBody, err := ioutil.ReadAll(localVarHttpResponse.Body)
+	localVarBody, err := io.ReadAll(localVarHttpResponse.Body)
 	localVarHttpResponse.Body.Close()
 	if err != nil {
 		return localVarReturnValue, localVarHttpResponse, err
@@ -790,7 +782,7 @@ func (a *CarbonAwareApiService) GetEmissionsDataForLocationsByTime(ctx context.C
 		return localVarReturnValue, localVarHttpResponse, err
 	}
 
-	localVarBody, err := ioutil.ReadAll(localVarHttpResponse.Body)
+	localVarBody, err := io.ReadAll(localVarHttpResponse.Body)
 	localVarHttpResponse.Body.Close()
 	if err != nil {
 		return localVarReturnValue, localVarHttpResponse, err

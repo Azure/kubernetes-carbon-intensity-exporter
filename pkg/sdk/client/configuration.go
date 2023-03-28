@@ -57,9 +57,9 @@ type Configuration struct {
 
 func NewConfiguration() *Configuration {
 	cfg := &Configuration{
-		BasePath:      "https://virtserver.swaggerhub.com/Microsoft-hela/carbonaware/1.0.0",
+		BasePath:      "http://api-server-svc.default.svc.cluster.local",
 		DefaultHeader: make(map[string]string),
-		UserAgent:     "Swagger-Codegen/1.0.0/go",
+		UserAgent:     "KEDA/carbon-exporter",
 	}
 	return cfg
 }

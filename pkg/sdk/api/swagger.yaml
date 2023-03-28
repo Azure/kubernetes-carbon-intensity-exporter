@@ -3,9 +3,8 @@ info:
   title: "CarbonAware.WebApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
   version: "1.0"
 servers:
-- url: https://virtserver.swaggerhub.com/Microsoft-hela/carbonaware/1.0.0
-  description: SwaggerHub API Auto Mocking
-- url: https://carbonaware.swagger.io/v2
+- url: http://api-server-svc.default.svc.cluster.local
+  description: API Server URL
 paths:
   /emissions/bylocations/best:
     get:
