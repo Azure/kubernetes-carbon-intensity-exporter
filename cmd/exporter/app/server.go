@@ -1,3 +1,7 @@
+/*
+MIT License
+Copyright (c) Microsoft Corporation.
+*/
 package app
 
 import (
@@ -7,6 +11,7 @@ import (
 	_ "net/http/pprof" // enable pprof in the server
 	"os"
 
+	"github.com/Azure/kubernetes-carbon-intensity-exporter/pkg/sdk/client"
 	"github.com/spf13/cobra"
 	"k8s.io/apiserver/pkg/server/healthz"
 	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -72,7 +77,9 @@ func NewExporterCommand(stopChan <-chan struct{}) *cobra.Command {
 }
 
 func Run(cc *exporterconfig.CompletedConfig, stopCh <-chan struct{}) error {
-	p, err := exporter.New(cc.ClusterClient, cc.Recorder)
+
+	apiClient := client.NewAPIClient(client.NewConfiguration())
+	p, err := exporter.New(cc.ClusterClient, apiClient, cc.Recorder)
 
 	if err != nil {
 		return fmt.Errorf("new syncer: %v", err)

@@ -1,18 +1,17 @@
-name: Create images
+name: Run e2e test
 on:
   push:
     branches:
       - main
-permissions:
-  contents: write
-  packages: write
-
+  pull_request:
+    branches:
+      - main
 
 env:
   REGISTRY: ghcr.io
   # Common versions
   GO_VERSION: '1.19'
-  
+
   SERVER_IMG_TAG : '0.1.0'
   EXPORTER_IMG_TAG: '0.1.0'
 
@@ -27,10 +26,10 @@ jobs:
           # registry must be in lowercase
           echo "registry=$(echo "${{ env.REGISTRY }}/${{ github.repository }}" | tr [:upper:] [:lower:])" >> $GITHUB_OUTPUT
 
-  publish-images:
+  e2e-test:
     runs-on: ubuntu-20.04
     needs:
-    - export-registry
+      - export-registry
     env:
       REGISTRY: ${{ needs.export-registry.outputs.registry }}
     steps:
@@ -44,9 +43,22 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push images
+      - name: install kubectl
+        uses: azure/setup-kubectl@v3
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.4.0
+        with:
+          cluster_name: "carbon"
+      - name: Run e2e test
         run: |
-          OUTPUT_TYPE=type=registry make docker-build-server-image docker-build-exporter-image
+          make docker-build-server-image docker-build-exporter-image
+          kind load docker-image -n carbon ${{ env.REGISTRY }}/server:${{ env.SERVER_IMG_TAG }}
+          kind load docker-image -n carbon ${{ env.REGISTRY }}/exporter:${{ env.EXPORTER_IMG_TAG }}
+          kubectl apply -f deploy/carbon-aware.yaml
+          sleep 20
+          kubectl wait --for=condition=available deploy carbon-aware --timeout=300s
+          sleep 20
+          kubectl logs $(echo $(kubectl get pods --output=jsonpath={.items..metadata.name})) -c carbon-data-exporter
         env:
           SERVER_IMG_TAG: ${{ env.SERVER_IMG_TAG }}
           EXPORTER_IMG_TAG: ${{ env.EXPORTER_IMG_TAG }}

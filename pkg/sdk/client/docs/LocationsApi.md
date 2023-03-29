@@ -2,9 +2,9 @@
 
 All URIs are relative to *https://virtserver.swaggerhub.com/Microsoft-hela/carbonaware/1.0.0*
 
-Method | HTTP request | Description
-------------- | ------------- | -------------
-[**GetAllLocations**](LocationsApi.md#GetAllLocations) | **Get** /locations | Get all locations instances
+| Method                                                 | HTTP request       | Description                 |
+|--------------------------------------------------------|--------------------|-----------------------------|
+| [**GetAllLocations**](LocationsApi.md#GetAllLocations) | **Get** /locations | Get all locations instances |
 
 # **GetAllLocations**
 > map[string]Location GetAllLocations(ctx, )
