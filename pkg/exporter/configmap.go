@@ -1,9 +1,14 @@
+/*
+MIT License
+Copyright (c) Microsoft Corporation.
+*/
 package exporter
 
 import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
 	"github.com/Azure/kubernetes-carbon-intensity-exporter/pkg/sdk/client"
 	corev1 "k8s.io/api/core/v1"
@@ -38,12 +43,12 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, emissionForecast
 		},
 		Immutable: &isImmutable,
 		Data: map[string]string{
-			"lastHeartbeatTime": forecast.DataEndAt.String(),     // The latest time that the data exporter controller sends the data.
-			"message":           "",                              // Additional information for user notification, if any.
-			"numOfRecords":      strconv.Itoa(forecastRecordNum), // The number can be any value between 0 (no records for the current location) and 24(hours) * 12(5 min interval per hour).
-			"forecastDateTime":  forecast.DataStartAt.String(),   // The time when the data was started by the GSF SDK.
-			"minForecast":       "",                              // min forecast in the binarydata.
-			"maxForecast":       "",                              // max forecast in the binarydata.
+			ConfigMapLastHeartbeatTime: time.Now().String(),             // The latest time that the data exporter controller sends the data.
+			ConfigMapMessage:           "",                              // Additional information for user notification, if any.
+			ConfigMapNumOfRecords:      strconv.Itoa(forecastRecordNum), // The number can be any value between 0 (no records for the current location) and 24(hours) * 12(5 min interval per hour).
+			ConfigMapForecastDateTime:  forecast.DataStartAt.String(),   // The time when the data was started by the GSF SDK.
+			ConfigMapMinForecast:       "",                              // min forecast in the binarydata.
+			ConfigMapMaxForecast:       "",                              // max forecast in the binarydata.
 		},
 		BinaryData: map[string][]byte{
 			"data": binaryData, // json marshal of the EmissionsData array.
@@ -53,7 +58,7 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, emissionForecast
 	currentConfig, err := e.clusterClient.CoreV1().ConfigMaps("default").Get(ctx, configMapName, v1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			klog.Info("configmap is not found, creating a new one")
+			klog.Info("no current configmap is found")
 		} else {
 			return err
 		}
@@ -62,6 +67,7 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, emissionForecast
 	// Delete the old configmap if any.
 	if currentConfig != nil && currentConfig.Name != "" || !apierrors.IsNotFound(err) {
 		// Delete it first (as it is immutable)
+		klog.Info("deleting current the configmap")
 		err = e.clusterClient.CoreV1().ConfigMaps("default").Delete(ctx, configMapName, v1.DeleteOptions{})
 		if err != nil {
 			return err
