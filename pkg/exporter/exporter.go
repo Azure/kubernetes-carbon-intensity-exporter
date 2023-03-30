@@ -115,10 +115,8 @@ func (e *Exporter) getCurrentForecastData(ctx context.Context, region []string) 
 
 	//klog.Infof("current forecast data for %s region is: \n", region)
 	//for i := range forecast {
-	//	index := i
-	//	index++
 	//	klog.Infof("%d. Location: %s {DataStartAt: %s, DataEndAt: %s, ForecastData: %v, OptimalDataPoints: %v}\n",
-	//		index, forecast[i].Location, forecast[i].DataStartAt.String(), forecast[i].DataEndAt.String(), forecast[i].ForecastData, forecast[i].OptimalDataPoints)
+	//		i+1, forecast[i].Location, forecast[i].DataStartAt.String(), forecast[i].DataEndAt.String(), forecast[i].ForecastData, forecast[i].OptimalDataPoints)
 	//}
 	return forecast, nil
 }

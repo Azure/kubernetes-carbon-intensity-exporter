@@ -7,6 +7,8 @@ package exporter
 import (
 	"context"
 	"errors"
+	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -32,10 +34,12 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, emissionForecast
 	if err != nil {
 		return err
 	}
-	forecastRecordNum := 0
-	if forecast.ForecastData != nil {
-		forecastRecordNum = len(forecast.ForecastData)
+
+	if forecast.ForecastData == nil || len(forecast.ForecastData) == 0 {
+		return errors.New("forecast data cannot be nil or empty")
 	}
+
+	minForecast, maxForeCast := getMinMaxForecast(ctx, forecast.ForecastData)
 
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
@@ -43,12 +47,12 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, emissionForecast
 		},
 		Immutable: &isImmutable,
 		Data: map[string]string{
-			ConfigMapLastHeartbeatTime: time.Now().String(),             // The latest time that the data exporter controller sends the data.
-			ConfigMapMessage:           "",                              // Additional information for user notification, if any.
-			ConfigMapNumOfRecords:      strconv.Itoa(forecastRecordNum), // The number can be any value between 0 (no records for the current location) and 24(hours) * 12(5 min interval per hour).
-			ConfigMapForecastDateTime:  forecast.DataStartAt.String(),   // The time when the data was started by the GSF SDK.
-			ConfigMapMinForecast:       "",                              // min forecast in the binarydata.
-			ConfigMapMaxForecast:       "",                              // max forecast in the binarydata.
+			ConfigMapLastHeartbeatTime: time.Now().String(),                      // The latest time that the data exporter controller sends the data.
+			ConfigMapMessage:           "",                                       // Additional information for user notification, if any.
+			ConfigMapNumOfRecords:      strconv.Itoa(len(forecast.ForecastData)), // The number can be any value between 0 (no records for the current location) and 24(hours) * 12(5 min interval per hour).
+			ConfigMapForecastDateTime:  forecast.DataStartAt.String(),            // The time when the data was started by the GSF SDK.
+			ConfigMapMinForecast:       fmt.Sprintf("%f", minForecast),           // min forecast in the forecastData.
+			ConfigMapMaxForecast:       fmt.Sprintf("%f", maxForeCast),           // max forecast in the forecastData.
 		},
 		BinaryData: map[string][]byte{
 			"data": binaryData, // json marshal of the EmissionsData array.
@@ -81,4 +85,15 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, emissionForecast
 	klog.Info("configmap has been Created")
 
 	return nil
+}
+
+func getMinMaxForecast(ctx context.Context, forecastData []client.EmissionsDataDto) (float64, float64) {
+	values := make([]float64, len(forecastData))
+	for index := range forecastData {
+		values[index] = forecastData[index].Value
+	}
+
+	// Sort values
+	sort.Float64s(values)
+	return values[0], values[len(values)-1]
 }
