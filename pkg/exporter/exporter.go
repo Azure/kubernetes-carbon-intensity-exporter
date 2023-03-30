@@ -101,7 +101,7 @@ func (e *Exporter) getCarbonIntensity(ctx context.Context, region string) {
 	klog.Infof("carbon intensity for %s region is %f", region, intensity.CarbonIntensity)
 }
 
-func (e *Exporter) getCurrentForecastData(ctx context.Context, region []string) (*[]client.EmissionsForecastDto, error) {
+func (e *Exporter) getCurrentForecastData(ctx context.Context, region []string) ([]client.EmissionsForecastDto, error) {
 	opt := &client.CarbonAwareApiGetCurrentForecastDataOpts{
 		DataStartAt: optional.EmptyTime(),
 		DataEndAt:   optional.EmptyTime(),
@@ -120,5 +120,5 @@ func (e *Exporter) getCurrentForecastData(ctx context.Context, region []string) 
 	//	klog.Infof("%d. Location: %s {DataStartAt: %s, DataEndAt: %s, ForecastData: %v, OptimalDataPoints: %v}\n",
 	//		index, forecast[i].Location, forecast[i].DataStartAt.String(), forecast[i].DataEndAt.String(), forecast[i].ForecastData, forecast[i].OptimalDataPoints)
 	//}
-	return &forecast, nil
+	return forecast, nil
 }
