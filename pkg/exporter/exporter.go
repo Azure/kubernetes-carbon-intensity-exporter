@@ -44,8 +44,21 @@ func (e *Exporter) Run(stopChan <-chan struct{}) {
 func (e *Exporter) Patrol() {
 	ctx := context.Background()
 	//e.getEmissionData(ctx, "eastus")
-	e.getCarbonIntensity(ctx, "eastus")
-	e.getCurrentForecastData(ctx, []string{"eastus"})
+	//e.getCarbonIntensity(ctx, "eastus")
+	forecast, err := e.getCurrentForecastData(ctx, []string{"eastus"})
+	if err != nil {
+		return
+	}
+	err = e.CreateOrUpdateConfigMap(ctx, forecast)
+	if err != nil {
+		e.recorder.Eventf(&corev1.ObjectReference{
+			Kind:      "Pod",
+			Namespace: "",
+			Name:      "carbon-data-exporter", // TODO: replace this with the actual Pod name, passed through the downward API.
+		}, corev1.EventTypeWarning, "Configmap Create", "Error while creating configmap")
+		klog.Errorf("an error has occurred while creating %s configmap, %s", configMapName, err.Error())
+		return
+	}
 	e.recorder.Eventf(&corev1.ObjectReference{
 		Kind:      "Pod",
 		Namespace: "",
@@ -88,7 +101,7 @@ func (e *Exporter) getCarbonIntensity(ctx context.Context, region string) {
 	klog.Infof("carbon intensity for %s region is %f", region, intensity.CarbonIntensity)
 }
 
-func (e *Exporter) getCurrentForecastData(ctx context.Context, region []string) {
+func (e *Exporter) getCurrentForecastData(ctx context.Context, region []string) (*[]client.EmissionsForecastDto, error) {
 	opt := &client.CarbonAwareApiGetCurrentForecastDataOpts{
 		DataStartAt: optional.EmptyTime(),
 		DataEndAt:   optional.EmptyTime(),
@@ -97,14 +110,15 @@ func (e *Exporter) getCurrentForecastData(ctx context.Context, region []string) 
 		region, opt)
 	if err != nil {
 		klog.ErrorS(err, "error while getting current forecast data")
-		return
+		return nil, err
 	}
 
-	klog.Infof("current forecast data for %s region is: \n", region)
-	for i := range forecast {
-		index := i
-		index++
-		klog.Infof("%d. Location: %s {DataStartAt: %s, DataEndAt: %s, ForecastData: %v, OptimalDataPoints: %v}\n",
-			index, forecast[i].Location, forecast[i].DataStartAt.String(), forecast[i].DataEndAt.String(), forecast[i].ForecastData, forecast[i].OptimalDataPoints)
-	}
+	//klog.Infof("current forecast data for %s region is: \n", region)
+	//for i := range forecast {
+	//	index := i
+	//	index++
+	//	klog.Infof("%d. Location: %s {DataStartAt: %s, DataEndAt: %s, ForecastData: %v, OptimalDataPoints: %v}\n",
+	//		index, forecast[i].Location, forecast[i].DataStartAt.String(), forecast[i].DataEndAt.String(), forecast[i].ForecastData, forecast[i].OptimalDataPoints)
+	//}
+	return &forecast, nil
 }
