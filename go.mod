@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/antihax/optional v1.0.0
 	github.com/spf13/cobra v1.6.0
+	golang.org/x/net v0.7.0
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b
 	k8s.io/api v0.26.2
 	k8s.io/apimachinery v0.26.2
@@ -77,7 +78,6 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.19.0 // indirect
-	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/term v0.5.0 // indirect
