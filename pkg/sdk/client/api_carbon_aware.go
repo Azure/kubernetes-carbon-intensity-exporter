@@ -95,7 +95,7 @@ func (a *CarbonAwareApiService) BatchForecastDataAsync(ctx context.Context, loca
 		// If we succeed, return the data, otherwise pass on to decode error.
 		err = a.client.decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
 		if err == nil {
-			return localVarReturnValue, localVarHttpResponse, err
+			return localVarReturnValue, localVarHttpResponse, nil
 		}
 	}
 
@@ -207,7 +207,7 @@ func (a *CarbonAwareApiService) GetAverageCarbonIntensity(ctx context.Context, l
 		// If we succeed, return the data, otherwise pass on to decode error.
 		err = a.client.decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
 		if err == nil {
-			return localVarReturnValue, localVarHttpResponse, err
+			return localVarReturnValue, localVarHttpResponse, nil
 		}
 	}
 
@@ -321,7 +321,7 @@ func (a *CarbonAwareApiService) GetAverageCarbonIntensityBatch(ctx context.Conte
 		// If we succeed, return the data, otherwise pass on to decode error.
 		err = a.client.decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
 		if err == nil {
-			return localVarReturnValue, localVarHttpResponse, err
+			return localVarReturnValue, localVarHttpResponse, nil
 		}
 	}
 
@@ -438,7 +438,7 @@ func (a *CarbonAwareApiService) GetBestEmissionsDataForLocationsByTime(ctx conte
 		// If we succeed, return the data, otherwise pass on to decode error.
 		err = a.client.decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
 		if err == nil {
-			return localVarReturnValue, localVarHttpResponse, err
+			return localVarReturnValue, localVarHttpResponse, nil
 		}
 	}
 
@@ -553,7 +553,7 @@ func (a *CarbonAwareApiService) GetCurrentForecastData(ctx context.Context, loca
 		// If we succeed, return the data, otherwise pass on to decode error.
 		err = a.client.decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
 		if err == nil {
-			return localVarReturnValue, localVarHttpResponse, err
+			return localVarReturnValue, localVarHttpResponse, nil
 		}
 	}
 
@@ -682,7 +682,7 @@ func (a *CarbonAwareApiService) GetEmissionsDataForLocationByTime(ctx context.Co
 		// If we succeed, return the data, otherwise pass on to decode error.
 		err = a.client.decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
 		if err == nil {
-			return localVarReturnValue, localVarHttpResponse, err
+			return localVarReturnValue, localVarHttpResponse, nil
 		}
 	}
 
@@ -792,7 +792,7 @@ func (a *CarbonAwareApiService) GetEmissionsDataForLocationsByTime(ctx context.C
 		// If we succeed, return the data, otherwise pass on to decode error.
 		err = a.client.decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
 		if err == nil {
-			return localVarReturnValue, localVarHttpResponse, err
+			return localVarReturnValue, localVarHttpResponse, nil
 		}
 	}
 

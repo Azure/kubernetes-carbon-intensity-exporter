@@ -24,6 +24,7 @@ type LocationsApiService service
 /*
 LocationsApiService Get all locations instances
   - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+
 @return map[string]Location
 */
 func (a *LocationsApiService) GetAllLocations(ctx context.Context) (map[string]Location, *http.Response, error) {
@@ -79,7 +80,7 @@ func (a *LocationsApiService) GetAllLocations(ctx context.Context) (map[string]L
 		// If we succeed, return the data, otherwise pass on to decode error.
 		err = a.client.decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
 		if err == nil {
-			return localVarReturnValue, localVarHttpResponse, err
+			return localVarReturnValue, localVarHttpResponse, nil
 		}
 	}
 
