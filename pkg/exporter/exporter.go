@@ -67,40 +67,6 @@ func (e *Exporter) Patrol() {
 
 }
 
-func (e *Exporter) getEmissionData(ctx context.Context, region string) {
-	opt := &client.CarbonAwareApiGetEmissionsDataForLocationByTimeOpts{
-		StartTime: optional.NewTime(time.Now().AddDate(0, 0, -1)),
-		EndTime:   optional.NewTime(time.Now()),
-	}
-	emissionsData, _, err := e.apiClient.CarbonAwareApi.GetEmissionsDataForLocationByTime(ctx,
-		region, opt)
-	if err != nil {
-		klog.ErrorS(err, "error while getting emissions data")
-		return
-	}
-
-	klog.Infof("emissionsData for %s region is: \n", region)
-	for i := range emissionsData {
-		index := i
-		index++
-		klog.Infof("%d. Location: %s {Time: %s, Duration: %s, Rating: %f}\n",
-			index, emissionsData[i].Location, emissionsData[i].Time.String(), emissionsData[i].Duration, emissionsData[i].Rating)
-	}
-}
-
-func (e *Exporter) getCarbonIntensity(ctx context.Context, region string) {
-	intensity, _, err := e.apiClient.CarbonAwareApi.GetAverageCarbonIntensity(ctx,
-		region,
-		time.Now().AddDate(0, 0, -1),
-		time.Now())
-	if err != nil {
-		klog.ErrorS(err, "error while getting carbon intensity")
-		return
-	}
-
-	klog.Infof("carbon intensity for %s region is %f", region, intensity.CarbonIntensity)
-}
-
 func (e *Exporter) getCurrentForecastData(ctx context.Context, region []string) ([]client.EmissionsForecastDto, error) {
 	opt := &client.CarbonAwareApiGetCurrentForecastDataOpts{
 		DataStartAt: optional.EmptyTime(),

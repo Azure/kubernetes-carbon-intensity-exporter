@@ -9,6 +9,24 @@ BUILDPLATFORM ?= linux/amd64
 BUILDX_BUILDER_NAME ?= img-builder
 QEMU_VERSION ?= 5.2.0-2
 
+TOOLS_DIR := hack/tools
+TOOLS_BIN_DIR := $(abspath $(TOOLS_DIR)/bin)
+
+GOLANGCI_LINT_VER := v1.49.0
+GOLANGCI_LINT_BIN := golangci-lint
+GOLANGCI_LINT := $(abspath $(TOOLS_BIN_DIR)/$(GOLANGCI_LINT_BIN)-$(GOLANGCI_LINT_VER))
+
+# Scripts
+GO_INSTALL := ./hack/go-install.sh
+
+## --------------------------------------
+## Tooling Binaries
+## --------------------------------------
+
+$(GOLANGCI_LINT):
+	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) github.com/golangci/golangci-lint/cmd/golangci-lint $(GOLANGCI_LINT_BIN) $(GOLANGCI_LINT_VER)
+
+
 .PHONY: docker-buildx-builder
 docker-buildx-builder:
 	@if ! docker buildx ls | grep $(BUILDX_BUILDER_NAME); then \
@@ -38,3 +56,11 @@ docker-build-exporter-image: docker-buildx-builder
 
 build:
 	go build -o _output/bin/exporter ./cmd/exporter/
+
+## --------------------------------------
+## Linting
+## --------------------------------------
+
+.PHONY: lint
+lint: $(GOLANGCI_LINT)
+	$(GOLANGCI_LINT) run -v
