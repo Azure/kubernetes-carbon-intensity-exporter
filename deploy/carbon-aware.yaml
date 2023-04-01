@@ -34,7 +34,7 @@ spec:
       serviceAccountName: carbon-aware-sa
       containers:
         - name: api-server
-          image: helayoty/server:0.1.0
+          image: ghcr.io/azure/kubernetes-carbon-intensity-exporter/server:0.1.0
           imagePullPolicy: IfNotPresent
           command:
           - sh
@@ -44,7 +44,7 @@ spec:
           - name: api-server-port
             containerPort: 7031
         - name: carbon-data-exporter
-          image: helayoty/exporter:0.1.0
+          image: ghcr.io/azure/kubernetes-carbon-intensity-exporter/exporter:0.1.0
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 9090
