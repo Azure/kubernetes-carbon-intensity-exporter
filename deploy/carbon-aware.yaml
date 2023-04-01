@@ -34,7 +34,7 @@ spec:
       serviceAccountName: carbon-aware-sa
       containers:
         - name: api-server
-          image: ghcr.io/azure/kubernetes-carbon-intensity-exporter/server:0.1.0
+          image: helayoty/server:0.1.0
           imagePullPolicy: IfNotPresent
           command:
           - sh
@@ -44,10 +44,23 @@ spec:
           - name: api-server-port
             containerPort: 7031
         - name: carbon-data-exporter
-          image: ghcr.io/azure/kubernetes-carbon-intensity-exporter/exporter:0.1.0
+          image: helayoty/exporter:0.1.0
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 9090
+          args:
+            - --configmap-name=carbon-intensity
+            - --patrol-interval=12h
+            - --region=eastus
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
 ---
 apiVersion: v1
 kind: Service

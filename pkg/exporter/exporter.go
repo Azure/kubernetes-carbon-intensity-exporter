@@ -5,6 +5,7 @@ Copyright (c) Microsoft Corporation.
 package exporter
 
 import (
+	"os"
 	"time"
 
 	"github.com/Azure/kubernetes-carbon-intensity-exporter/pkg/sdk/client"
@@ -17,9 +18,9 @@ import (
 	"k8s.io/klog/v2"
 )
 
-const (
-	//TODO: make it a configurable option.
-	patrolInterval = time.Second * 1200
+var (
+	podName   = os.Getenv("POD_NAME")
+	namespace = os.Getenv("NAMESPACE")
 )
 
 type Exporter struct {
@@ -37,52 +38,46 @@ func New(clusterClient clientset.Interface, apiClient *client.APIClient, recorde
 	return b, nil
 }
 
-func (e *Exporter) Run(stopChan <-chan struct{}) {
-	go wait.Until(e.Patrol, patrolInterval, stopChan)
+func (e *Exporter) Run(ctx context.Context, configmapName, region string, patrolInterval time.Duration, startDate, endDate optional.Time, stopChan <-chan struct{}) {
+	go wait.Until(func() {
+		e.Patrol(ctx, configmapName, region, startDate, endDate)
+	}, patrolInterval, stopChan)
 }
 
-func (e *Exporter) Patrol() {
-	ctx := context.Background()
-	//e.getEmissionData(ctx, "eastus")
-	//e.getCarbonIntensity(ctx, "eastus")
-	forecast, err := e.getCurrentForecastData(ctx, []string{"eastus"})
+func (e *Exporter) Patrol(ctx context.Context, configmapName, region string, startDate, endDate optional.Time) {
+	forecast, err := e.getCurrentForecastData(ctx, region, startDate, endDate)
 	if err != nil {
 		return
 	}
-	err = e.CreateOrUpdateConfigMap(ctx, forecast)
+	err = e.CreateOrUpdateConfigMap(ctx, configmapName, forecast)
 	if err != nil {
 		e.recorder.Eventf(&corev1.ObjectReference{
 			Kind:      "Pod",
-			Namespace: "",
-			Name:      "carbon-data-exporter", // TODO: replace this with the actual Pod name, passed through the downward API.
+			Namespace: namespace,
+			Name:      podName,
 		}, corev1.EventTypeWarning, "Configmap Create", "Error while creating configmap")
-		klog.Errorf("an error has occurred while creating %s configmap, %s", configMapName, err.Error())
+		klog.Errorf("an error has occurred while creating %s configmap, %s", configmapName, err.Error())
 		return
 	}
 	e.recorder.Eventf(&corev1.ObjectReference{
 		Kind:      "Pod",
-		Namespace: "",
-		Name:      "carbon-data-exporter", // TODO: replace this with the actual Pod name, passed through the downward API.
+		Namespace: namespace,
+		Name:      podName,
 	}, corev1.EventTypeNormal, "Exporter results", "Done retrieve data")
 
 }
 
-func (e *Exporter) getCurrentForecastData(ctx context.Context, region []string) ([]client.EmissionsForecastDto, error) {
+func (e *Exporter) getCurrentForecastData(ctx context.Context, region string, startDate, endDate optional.Time) ([]client.EmissionsForecastDto, error) {
 	opt := &client.CarbonAwareApiGetCurrentForecastDataOpts{
-		DataStartAt: optional.EmptyTime(),
-		DataEndAt:   optional.EmptyTime(),
+		DataStartAt: startDate,
+		DataEndAt:   endDate,
 	}
 	forecast, _, err := e.apiClient.CarbonAwareApi.GetCurrentForecastData(ctx,
-		region, opt)
+		[]string{region}, opt)
 	if err != nil {
 		klog.ErrorS(err, "error while getting current forecast data")
 		return nil, err
 	}
 
-	//klog.Infof("current forecast data for %s region is: \n", region)
-	//for i := range forecast {
-	//	klog.Infof("%d. Location: %s {DataStartAt: %s, DataEndAt: %s, ForecastData: %v, OptimalDataPoints: %v}\n",
-	//		i+1, forecast[i].Location, forecast[i].DataStartAt.String(), forecast[i].DataEndAt.String(), forecast[i].ForecastData, forecast[i].OptimalDataPoints)
-	//}
 	return forecast, nil
 }
