@@ -38,14 +38,14 @@ func New(clusterClient clientset.Interface, apiClient *client.APIClient, recorde
 	return b, nil
 }
 
-func (e *Exporter) Run(ctx context.Context, configmapName, region string, patrolInterval time.Duration, startDate, endDate optional.Time, stopChan <-chan struct{}) {
+func (e *Exporter) Run(ctx context.Context, configmapName, region string, patrolInterval time.Duration, stopChan <-chan struct{}) {
 	go wait.Until(func() {
-		e.Patrol(ctx, configmapName, region, startDate, endDate)
+		e.Patrol(ctx, configmapName, region)
 	}, patrolInterval, stopChan)
 }
 
-func (e *Exporter) Patrol(ctx context.Context, configmapName, region string, startDate, endDate optional.Time) {
-	forecast, err := e.getCurrentForecastData(ctx, region, startDate, endDate)
+func (e *Exporter) Patrol(ctx context.Context, configmapName, region string) {
+	forecast, err := e.getCurrentForecastData(ctx, region)
 	if err != nil {
 		return
 	}
@@ -67,10 +67,10 @@ func (e *Exporter) Patrol(ctx context.Context, configmapName, region string, sta
 
 }
 
-func (e *Exporter) getCurrentForecastData(ctx context.Context, region string, startDate, endDate optional.Time) ([]client.EmissionsForecastDto, error) {
+func (e *Exporter) getCurrentForecastData(ctx context.Context, region string) ([]client.EmissionsForecastDto, error) {
 	opt := &client.CarbonAwareApiGetCurrentForecastDataOpts{
-		DataStartAt: startDate,
-		DataEndAt:   endDate,
+		DataStartAt: optional.EmptyTime(),
+		DataEndAt:   optional.EmptyTime(),
 	}
 	forecast, _, err := e.apiClient.CarbonAwareApi.GetCurrentForecastData(ctx,
 		[]string{region}, opt)

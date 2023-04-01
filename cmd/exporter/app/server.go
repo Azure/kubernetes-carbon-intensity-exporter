@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/Azure/kubernetes-carbon-intensity-exporter/pkg/sdk/client"
-	"github.com/antihax/optional"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 	"k8s.io/apiserver/pkg/server/healthz"
@@ -33,8 +32,6 @@ var (
 	configmapName  = flag.String("configmap-name", "carbon-intensity", "Configmap name - Default 'carbonIntensity'")
 	patrolInterval = flag.String("patrol-interval", "12h", "Patrol interval in hours - Default every 12 hours")
 	region         = flag.String("region", "", "Region to get carbon intensity for - Required")
-	startDate      = flag.String("start-date", "", "Start date - Default time at last 24h ")
-	endDate        = flag.String("end-date", "", "End date - Default time now")
 )
 
 func NewExporterCommand(stopChan <-chan struct{}) *cobra.Command {
@@ -144,26 +141,8 @@ func startExporter(p *exporter.Exporter, stopCh <-chan struct{}) func(context.Co
 		}
 	}
 
-	// Parse startDate and endDate to optional.Time
-	optStart := optional.EmptyTime()
-	optEnd := optional.EmptyTime()
-	if startDate != nil && *startDate != "" {
-		sTime, err := time.Parse(exporter.TimeLayout, *startDate)
-		if err != nil {
-			klog.Fatalf("an error while parsing start-date, err: %s", err.Error())
-		}
-		optStart = optional.NewTime(sTime)
-	}
-	if endDate != nil && *endDate != "" {
-		eTime, err := time.Parse(exporter.TimeLayout, *endDate)
-		if err != nil {
-			klog.Fatalf("an error while parsing end-date, err: %s", err.Error())
-		}
-		optEnd = optional.NewTime(eTime)
-	}
-
 	return func(ctx context.Context) {
-		p.Run(ctx, *configmapName, *region, ptDuration, optStart, optEnd, stopCh)
+		p.Run(ctx, *configmapName, *region, ptDuration, stopCh)
 		<-ctx.Done()
 	}
 }
