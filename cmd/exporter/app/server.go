@@ -9,10 +9,11 @@ import (
 	"fmt"
 	"net/http"
 	_ "net/http/pprof" // enable pprof in the server
-	"os"
+	"time"
 
 	"github.com/Azure/kubernetes-carbon-intensity-exporter/pkg/sdk/client"
 	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 	"k8s.io/apiserver/pkg/server/healthz"
 	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
 	cliflag "k8s.io/component-base/cli/flag"
@@ -26,7 +27,15 @@ import (
 	"github.com/Azure/kubernetes-carbon-intensity-exporter/pkg/exporter"
 )
 
+var (
+	//exporter command args
+	configmapName  = flag.String("configmap-name", "carbon-intensity", "Configmap name - Default 'carbonIntensity'")
+	patrolInterval = flag.String("patrol-interval", "12h", "Patrol interval in hours - Default every 12 hours")
+	region         = flag.String("region", "", "Region to get carbon intensity for - Required")
+)
+
 func NewExporterCommand(stopChan <-chan struct{}) *cobra.Command {
+
 	s, err := options.NewExporterOptions()
 	if err != nil {
 		klog.Fatalf("unable to initialize command options: %v", err)
@@ -42,13 +51,10 @@ func NewExporterCommand(stopChan <-chan struct{}) *cobra.Command {
 
 			c, err = s.Config()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "%v\n", err)
-				os.Exit(1)
+				klog.Fatalf("unable to initialize command configs: %s", err.Error())
 			}
-
-			if err := Run(c.Complete(), stopChan); err != nil {
-				fmt.Fprintf(os.Stderr, "%v\n", err)
-				os.Exit(1)
+			if err := Run(c.Complete(), *region, *patrolInterval, stopChan); err != nil {
+				klog.Fatalf("unable to execute command : %s", err.Error())
 			}
 		},
 	}
@@ -76,11 +82,10 @@ func NewExporterCommand(stopChan <-chan struct{}) *cobra.Command {
 	return cmd
 }
 
-func Run(cc *exporterconfig.CompletedConfig, stopCh <-chan struct{}) error {
-
+func Run(cc *exporterconfig.CompletedConfig, region string, patrolInterval string, stopCh <-chan struct{}) error {
+	// Init client SDK and exporter
 	apiClient := client.NewAPIClient(client.NewConfiguration())
-	p, err := exporter.New(cc.ClusterClient, apiClient, cc.Recorder)
-
+	e, err := exporter.New(cc.ClusterClient, apiClient, cc.Recorder)
 	if err != nil {
 		return fmt.Errorf("new syncer: %v", err)
 	}
@@ -100,7 +105,7 @@ func Run(cc *exporterconfig.CompletedConfig, stopCh <-chan struct{}) error {
 	defer cancel()
 
 	// Prepare a reusable runCommand function.
-	run := startExporter(p, stopCh)
+	run := startExporter(e, stopCh)
 
 	go func() {
 		select {
@@ -127,8 +132,17 @@ func Run(cc *exporterconfig.CompletedConfig, stopCh <-chan struct{}) error {
 }
 
 func startExporter(p *exporter.Exporter, stopCh <-chan struct{}) func(context.Context) {
+	// Parse patrolInterval to time.Duration
+	ptDuration, err := time.ParseDuration(*patrolInterval)
+	if err != nil {
+		return func(ctx context.Context) {
+			klog.Fatalf("an error while parsing patrol-interval, err: %s", err.Error())
+			ctx.Err()
+		}
+	}
+
 	return func(ctx context.Context) {
-		p.Run(stopCh)
+		p.Run(ctx, *configmapName, *region, ptDuration, stopCh)
 		<-ctx.Done()
 	}
 }

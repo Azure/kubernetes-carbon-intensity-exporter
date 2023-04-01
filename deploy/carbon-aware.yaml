@@ -48,6 +48,19 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 9090
+          args:
+            - --configmap-name=carbon-intensity
+            - --patrol-interval=12h
+            - --region=eastus
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
 ---
 apiVersion: v1
 kind: Service

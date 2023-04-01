@@ -21,11 +21,10 @@ import (
 )
 
 var (
-	configMapName = "carbonintensity"
-	isImmutable   = true
+	isImmutable = true
 )
 
-func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, emissionForecast []client.EmissionsForecastDto) error {
+func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configmapName string, emissionForecast []client.EmissionsForecastDto) error {
 	if emissionForecast == nil {
 		return errors.New("emission forecast cannot be nil")
 	}
@@ -43,7 +42,8 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, emissionForecast
 
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
-			Name: configMapName,
+			Name:      configmapName,
+			Namespace: namespace,
 		},
 		Immutable: &isImmutable,
 		Data: map[string]string{
@@ -59,10 +59,10 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, emissionForecast
 		},
 	}
 
-	currentConfig, err := e.clusterClient.CoreV1().ConfigMaps("default").Get(ctx, configMapName, v1.GetOptions{})
+	currentConfig, err := e.clusterClient.CoreV1().ConfigMaps(namespace).Get(ctx, configmapName, v1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			klog.Info("no current configmap is found")
+			klog.Infof("configmap %s is not found", configmapName)
 		} else {
 			return err
 		}
@@ -72,17 +72,17 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, emissionForecast
 	if currentConfig != nil && currentConfig.Name != "" || !apierrors.IsNotFound(err) {
 		// Delete it first (as it is immutable)
 		klog.Info("deleting current the configmap")
-		err = e.clusterClient.CoreV1().ConfigMaps("default").Delete(ctx, configMapName, v1.DeleteOptions{})
+		err = e.clusterClient.CoreV1().ConfigMaps(namespace).Delete(ctx, configmapName, v1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err = e.clusterClient.CoreV1().ConfigMaps("default").Create(ctx, configMap, v1.CreateOptions{})
+	_, err = e.clusterClient.CoreV1().ConfigMaps(namespace).Create(ctx, configMap, v1.CreateOptions{})
 	if err != nil {
 		return err
 	}
-	klog.Info("configmap has been Created")
+	klog.Infof("configmap %s has been Created", configmapName)
 
 	return nil
 }
