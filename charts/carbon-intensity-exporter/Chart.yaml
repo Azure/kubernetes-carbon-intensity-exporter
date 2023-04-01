@@ -1,0 +1,6 @@
+apiVersion: v2
+name: carbon-intensity-exporter
+description: A Helm chart for Kubernetes carbon-intensity-exporter
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

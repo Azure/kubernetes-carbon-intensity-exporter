@@ -1,0 +1,42 @@
+# Default values for carbon-intensity-exporter.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+namespace: kube-system
+
+apiServer:
+  name: api-server
+  username: wibuchan
+  password: greenAI
+  image:
+    repository: ghcr.io/azure/kubernetes-carbon-intensity-exporter/server
+    pullPolicy: Always
+    tag: "0.1.0"
+carbonDataExporter:
+  name: carbon-data-exporter
+  image:
+    repository: ghcr.io/azure/kubernetes-carbon-intensity-exporter/exporter
+    pullPolicy: Always
+    tag: "0.1.0"
+  configmapName: carbon-intensity
+  patrolInterval: 12h
+  region: eastus
+
+service:
+  type: ClusterIP
+  port: 80
+
+rbac:
+  clusterRoleName: carbon-aware-binding
+  serviceAccountName: carbon-aware-sa
+  roleRef: cluster-admin
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+podAnnotations: {}
+podSecurityContext: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "carbon-intensity-exporter.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "carbon-intensity-exporter.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "carbon-intensity-exporter.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "carbon-intensity-exporter.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.rbac.serviceAccountName }}
+      containers:
+        - name: {{ .Values.apiServer.name }}
+          image: "{{ .Values.apiServer.image.repository }}:{{ .Values.apiServer.image.tag }}"
+          imagePullPolicy: {{ .Values.apiServer.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - cd /app && sed "s/username/{{ .Values.apiServer.username }}/" -i appsettings.json && sed "s/password/{{ .Values.apiServer.password }}/" -i appsettings.json && dotnet CarbonAware.WebApi.dll
+          ports:
+            - name: api-server-port
+              containerPort: 7031
+        - name: {{ .Values.carbonDataExporter.name }}
+          image: "{{ .Values.carbonDataExporter.image.repository }}:{{ .Values.carbonDataExporter.image.tag }}"
+          imagePullPolicy: {{ .Values.carbonDataExporter.image.pullPolicy }}
+          ports:
+            - containerPort: 9090
+          args:
+            - --configmap-name={{ .Values.carbonDataExporter.configmapName }}
+            - --patrol-interval={{ .Values.carbonDataExporter.patrolInterval }}
+            - --region={{ .Values.carbonDataExporter.region }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

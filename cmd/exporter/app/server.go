@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Azure/kubernetes-carbon-intensity-exporter/pkg/sdk/client"
+	"github.com/antihax/optional"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 	"k8s.io/apiserver/pkg/server/healthz"

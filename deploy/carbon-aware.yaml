@@ -10,7 +10,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: carbon-aware-sa
-    namespace: default
+    namespace: kube-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
