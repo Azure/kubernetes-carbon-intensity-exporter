@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: carbon-aware-sa
+  namespace: kube-system
 ---
 apiVersion: "rbac.authorization.k8s.io/v1"
 kind: ClusterRoleBinding
@@ -20,7 +21,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: carbon-aware
-  namespace: default
+  namespace: kube-system
 spec:
   replicas: 1
   selector:
@@ -39,7 +40,7 @@ spec:
           command:
           - sh
           - -c
-          - cd /app && sed "s/username/wibuchan/" -i appsettings.json && sed "s/password/greenAI/" -i appsettings.json && dotnet CarbonAware.WebApi.dll
+          - cd /app && sed "s/username/USERNAME/" -i appsettings.json && sed "s/password/PASSWORD/" -i appsettings.json && dotnet CarbonAware.WebApi.dll
           ports:
           - name: api-server-port
             containerPort: 7031
@@ -66,6 +67,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: api-server-svc
+  namespace: kube-system
 spec:
   selector:
     app: carbon-aware

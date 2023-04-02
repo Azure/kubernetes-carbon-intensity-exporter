@@ -7,8 +7,8 @@ namespace: kube-system
 
 apiServer:
   name: api-server
-  username: wibuchan
-  password: greenAI
+  username: username
+  password: password
   image:
     repository: ghcr.io/azure/kubernetes-carbon-intensity-exporter/server
     pullPolicy: Always
