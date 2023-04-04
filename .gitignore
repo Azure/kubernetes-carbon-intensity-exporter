@@ -30,3 +30,4 @@ _output
 .idea
 
 /hack/tools/bin/
+.DS_Store

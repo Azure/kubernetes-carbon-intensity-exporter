@@ -14,9 +14,9 @@ import (
 
 	"github.com/Azure/kubernetes-carbon-intensity-exporter/pkg/sdk/client"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/json"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog/v2"
 )
 
@@ -24,7 +24,7 @@ var (
 	isImmutable = true
 )
 
-func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configmapName string, emissionForecast []client.EmissionsForecastDto) error {
+func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configMapName string, emissionForecast []client.EmissionsForecastDto) error {
 	if emissionForecast == nil {
 		return errors.New("emission forecast cannot be nil")
 	}
@@ -42,8 +42,8 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configmapName st
 
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      configmapName,
-			Namespace: client.Namespace,
+			Name:      configMapName,
+			Namespace: namespace,
 		},
 		Immutable: &isImmutable,
 		Data: map[string]string{
@@ -59,31 +59,45 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configmapName st
 		},
 	}
 
-	currentConfig, err := e.clusterClient.CoreV1().ConfigMaps(client.Namespace).Get(ctx, configmapName, v1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			klog.Infof("configmap %s is not found", configmapName)
-		} else {
-			return err
-		}
-	}
-
-	// Delete the old configmap if any.
-	if currentConfig != nil && currentConfig.Name != "" || !apierrors.IsNotFound(err) {
-		// Delete it first (as it is immutable)
-		klog.Info("deleting current the configmap")
-		err = e.clusterClient.CoreV1().ConfigMaps(client.Namespace).Delete(ctx, configmapName, v1.DeleteOptions{})
-		if err != nil {
-			return err
-		}
-	}
-
-	_, err = e.clusterClient.CoreV1().ConfigMaps(client.Namespace).Create(ctx, configMap, v1.CreateOptions{})
+	_, err = e.clusterClient.CoreV1().
+		ConfigMaps(namespace).
+		Create(ctx, configMap, v1.CreateOptions{})
 	if err != nil {
 		return err
 	}
-	klog.Infof("configmap %s has been Created", configmapName)
+	klog.Infof("configMap %s has been created", configMapName)
 
+	return nil
+}
+
+func (e *Exporter) GetGonfigMapWatch(ctx context.Context, configMapName string) watch.Interface {
+	watch, err := e.clusterClient.CoreV1().
+		ConfigMaps(namespace).
+		Watch(ctx, v1.ListOptions{
+			FieldSelector: "metadata.name=" + configMapName,
+		})
+	if err != nil {
+		klog.Fatalf("unable to watch configMap %s, err: %v", configMapName, err)
+	}
+	return watch
+}
+
+func (e *Exporter) DeleteConfigmap(ctx context.Context, configMapName string) error {
+	_, err := e.clusterClient.CoreV1().ConfigMaps(namespace).Get(ctx, configMapName, v1.GetOptions{})
+	if err != nil {
+		klog.Errorf("unable to get configMap %s", configMapName)
+		return err
+	}
+
+	err = e.clusterClient.CoreV1().
+		ConfigMaps(namespace).
+		Delete(ctx, configMapName, v1.DeleteOptions{})
+	if err != nil {
+		klog.Errorf("unable to delete configMap %s", configMapName)
+		return err
+	}
+
+	klog.Infof("configMap %s has been deleted", configMapName)
 	return nil
 }
 
