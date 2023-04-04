@@ -25,7 +25,7 @@ var (
 	isImmutable = true
 )
 
-func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configMapName string, emissionForecast []client.EmissionsForecastDto) error {
+func (e *Exporter) CreateConfigMapFromEmissionForecast(ctx context.Context, configMapName string, emissionForecast []client.EmissionsForecastDto) error {
 	if emissionForecast == nil {
 		return errors.New("emission forecast cannot be nil")
 	}
@@ -41,33 +41,36 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configMapName st
 
 	minForecast, maxForeCast := getMinMaxForecast(ctx, forecast.ForecastData)
 
-	configMap := &corev1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      configMapName,
-			Namespace: client.Namespace,
-		},
-		Immutable: &isImmutable,
-		Data: map[string]string{
+	return e.CreateConfigMapFromProperties(ctx, configMapName,
+		map[string]string{
 			ConfigMapLastHeartbeatTime: time.Now().String(),                      // The latest time that the data exporter controller sends the data.
 			ConfigMapMessage:           "",                                       // Additional information for user notification, if any.
 			ConfigMapNumOfRecords:      strconv.Itoa(len(forecast.ForecastData)), // The number can be any value between 0 (no records for the current location) and 24(hours) * 12(5 min interval per hour).
 			ConfigMapForecastDateTime:  forecast.DataStartAt.String(),            // The time when the data was started by the GSF SDK.
 			ConfigMapMinForecast:       fmt.Sprintf("%f", minForecast),           // min forecast in the forecastData.
 			ConfigMapMaxForecast:       fmt.Sprintf("%f", maxForeCast),           // max forecast in the forecastData.
+		}, binaryData)
+}
+
+func (e *Exporter) CreateConfigMapFromProperties(ctx context.Context, configMapName string, data map[string]string, binaryData []byte) error {
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      configMapName,
+			Namespace: client.Namespace,
 		},
+		Immutable: &isImmutable,
+		Data:      data,
 		BinaryData: map[string][]byte{
-			"data": binaryData, // json marshal of the EmissionsData array.
+			BinaryData: binaryData, // json marshal of the EmissionsData array.
 		},
 	}
-
-	_, err = e.clusterClient.CoreV1().
+	_, err := e.clusterClient.CoreV1().
 		ConfigMaps(client.Namespace).
 		Create(ctx, configMap, v1.CreateOptions{})
 	if err != nil {
 		return err
 	}
 	klog.Infof("configMap %s has been created", configMapName)
-
 	return nil
 }
 
@@ -83,13 +86,14 @@ func (e *Exporter) GetGonfigMapWatch(ctx context.Context, configMapName string) 
 	return watch
 }
 
-func (e *Exporter) DeleteConfigmap(ctx context.Context, configMapName string) error {
-	_, err := e.clusterClient.CoreV1().ConfigMaps(client.Namespace).Get(ctx, configMapName, v1.GetOptions{})
+func (e *Exporter) DeleteConfigMap(ctx context.Context, configMapName string) error {
+	currentConfigMap, err := e.GetConfigMap(ctx, configMapName)
 	if err != nil {
-		if apierrors.IsNotFound(err) { // if configMap is not found, no errors will be returned.
-			return nil
-		}
 		return err
+	}
+
+	if currentConfigMap == nil {
+		return nil // configMap is not found, delete will not be called.
 	}
 
 	err = e.clusterClient.CoreV1().
@@ -102,6 +106,18 @@ func (e *Exporter) DeleteConfigmap(ctx context.Context, configMapName string) er
 
 	klog.Infof("configMap %s has been deleted", configMapName)
 	return nil
+}
+
+func (e *Exporter) GetConfigMap(ctx context.Context, configMapName string) (*corev1.ConfigMap, error) {
+	currentConfigMap, err := e.clusterClient.CoreV1().ConfigMaps(client.Namespace).Get(ctx, configMapName, v1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) { // if configMap is not found, no errors will be returned.
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return currentConfigMap, nil
 }
 
 func getMinMaxForecast(ctx context.Context, forecastData []client.EmissionsDataDto) (float64, float64) {

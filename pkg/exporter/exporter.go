@@ -105,19 +105,43 @@ func (e *Exporter) Run(ctx context.Context, configMapName, region string, patrol
 }
 
 func (e *Exporter) RefreshData(ctx context.Context, configMapName string, region string, stopChan <-chan struct{}) error {
-	err := e.DeleteConfigmap(ctx, configMapName)
+	// get current object (if any) in case we could not update the data.
+	currentConfigMap, err := e.GetConfigMap(ctx, configMapName)
+	if err != nil {
+		return err
+	}
+
+	err = e.DeleteConfigMap(ctx, configMapName)
 	if err != nil && !apierrors.IsNotFound(err) { // if configMap is not found,
 		return err
 	}
 
-	retry.OnError(constantBackoff, func(err error) bool {
+	var forecast []client.EmissionsForecastDto
+	err = retry.OnError(constantBackoff, func(err error) bool {
 		return true
 	}, func() error {
-		forecast, err := e.getCurrentForecastData(ctx, region, stopChan)
-		if err != nil {
+		forecast, err = e.getCurrentForecastData(ctx, region, stopChan)
+		return err
+	})
+	if err != nil {
+		if currentConfigMap != nil {
+			// return old data with failed message
+			return e.UseCurrentConfigMap(ctx, currentConfigMap)
+		} else {
+			e.recorder.Eventf(&corev1.ObjectReference{
+				Kind:      "Pod",
+				Namespace: client.Namespace,
+				Name:      client.PodName,
+			}, corev1.EventTypeWarning, "Cannot retrieve updated forecast data", "Error while retrieving updated forecast data")
+			klog.Errorf("an error has occurred while retrieving updated forecast data")
 			return err
 		}
-		return e.CreateOrUpdateConfigMap(ctx, configMapName, forecast)
+	}
+
+	err = retry.OnError(constantBackoff, func(err error) bool {
+		return true
+	}, func() error {
+		return e.CreateConfigMapFromEmissionForecast(ctx, configMapName, forecast)
 	})
 	if err != nil {
 		e.recorder.Eventf(&corev1.ObjectReference{
@@ -134,6 +158,25 @@ func (e *Exporter) RefreshData(ctx context.Context, configMapName string, region
 		Name:      client.PodName,
 	}, corev1.EventTypeNormal, "Exporter results", "Done retrieve data")
 	return nil
+}
+
+func (e *Exporter) UseCurrentConfigMap(ctx context.Context, currentConfigMap *corev1.ConfigMap) error {
+	if currentConfigMap.Data != nil {
+		currentConfigMap.Data[ConfigMapLastHeartbeatTime] = time.Now().String()
+		currentConfigMap.Data[ConfigMapMessage] = "Unable to update forecast Data."
+	} else {
+		currentConfigMap.Data = map[string]string{
+			ConfigMapLastHeartbeatTime: time.Now().String(),
+			ConfigMapMessage:           "Unable to update forecast Data.",
+		}
+	}
+	if currentConfigMap.BinaryData == nil {
+		currentConfigMap.BinaryData = map[string][]byte{
+			BinaryData: {},
+		}
+	}
+	return e.CreateConfigMapFromProperties(ctx, currentConfigMap.Name,
+		currentConfigMap.Data, currentConfigMap.BinaryData[BinaryData])
 }
 
 func (e *Exporter) getCurrentForecastData(ctx context.Context, region string, stopChan <-chan struct{}) ([]client.EmissionsForecastDto, error) {
