@@ -26,8 +26,7 @@ error() {
 TMPDIR=""
 
 cleanup() {
- helm uninstall carbon-e2e
- kind delete clusters -n carbon-e2e
+ kind delete cluster -n carbon-e2e
  if [ -n "$TMPDIR" ]; then
      rm -rf "$TMPDIR"
  fi
@@ -60,7 +59,7 @@ sleep 10
 
 kubectl delete configmap carbon-intensity -n kube-system
 
-sleep 10
+sleep 15
 
 kubectl get configmap carbon-intensity -n kube-system
 kubectl describe configmap carbon-intensity -n kube-system

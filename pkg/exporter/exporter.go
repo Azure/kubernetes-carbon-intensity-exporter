@@ -12,11 +12,19 @@ import (
 	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/klog/v2"
+)
+
+var (
+	constantBackoff = wait.Backoff{
+		Duration: 3 * time.Second,
+		Steps:    10,
+	}
 )
 
 type Exporter struct {
@@ -66,8 +74,8 @@ func (e *Exporter) Run(ctx context.Context, configMapName, region string, patrol
 
 				e.recorder.Eventf(&corev1.ObjectReference{
 					Kind:      "Pod",
-					Namespace: namespace,
-					Name:      podName,
+					Namespace: client.Namespace,
+					Name:      client.PodName,
 				}, corev1.EventTypeWarning, "Configmap Deleted", "Configmap got deleted")
 			}
 
@@ -84,8 +92,8 @@ func (e *Exporter) Run(ctx context.Context, configMapName, region string, patrol
 
 			e.recorder.Eventf(&corev1.ObjectReference{
 				Kind:      "Pod",
-				Namespace: namespace,
-				Name:      podName,
+				Namespace: client.Namespace,
+				Name:      client.PodName,
 			}, corev1.EventTypeNormal, "Configmap updated", "Configmap gets updated")
 
 			// context got canceled or done
@@ -102,7 +110,7 @@ func (e *Exporter) RefreshData(ctx context.Context, configMapName string, region
 		return err
 	}
 
-	retry.OnError(retry.DefaultBackoff, func(err error) bool {
+	retry.OnError(constantBackoff, func(err error) bool {
 		return true
 	}, func() error {
 		forecast, err := e.getCurrentForecastData(ctx, region, stopChan)
@@ -114,8 +122,8 @@ func (e *Exporter) RefreshData(ctx context.Context, configMapName string, region
 	if err != nil {
 		e.recorder.Eventf(&corev1.ObjectReference{
 			Kind:      "Pod",
-			Namespace: namespace,
-			Name:      podName,
+			Namespace: client.Namespace,
+			Name:      client.PodName,
 		}, corev1.EventTypeWarning, "Configmap Create", "Error while creating configMap")
 		klog.Errorf("an error has occurred while creating %s configMap, err: %s", configMapName, err.Error())
 		return err

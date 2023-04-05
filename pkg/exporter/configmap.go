@@ -44,7 +44,7 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configMapName st
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      configMapName,
-			Namespace: namespace,
+			Namespace: client.Namespace,
 		},
 		Immutable: &isImmutable,
 		Data: map[string]string{
@@ -61,7 +61,7 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configMapName st
 	}
 
 	_, err = e.clusterClient.CoreV1().
-		ConfigMaps(namespace).
+		ConfigMaps(client.Namespace).
 		Create(ctx, configMap, v1.CreateOptions{})
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configMapName st
 
 func (e *Exporter) GetGonfigMapWatch(ctx context.Context, configMapName string) watch.Interface {
 	watch, err := e.clusterClient.CoreV1().
-		ConfigMaps(namespace).
+		ConfigMaps(client.Namespace).
 		Watch(ctx, v1.ListOptions{
 			FieldSelector: "metadata.name=" + configMapName,
 		})
@@ -84,7 +84,7 @@ func (e *Exporter) GetGonfigMapWatch(ctx context.Context, configMapName string) 
 }
 
 func (e *Exporter) DeleteConfigmap(ctx context.Context, configMapName string) error {
-	_, err := e.clusterClient.CoreV1().ConfigMaps(namespace).Get(ctx, configMapName, v1.GetOptions{})
+	_, err := e.clusterClient.CoreV1().ConfigMaps(client.Namespace).Get(ctx, configMapName, v1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) { // if configMap is not found, no errors will be returned.
 			return nil
@@ -93,7 +93,7 @@ func (e *Exporter) DeleteConfigmap(ctx context.Context, configMapName string) er
 	}
 
 	err = e.clusterClient.CoreV1().
-		ConfigMaps(namespace).
+		ConfigMaps(client.Namespace).
 		Delete(ctx, configMapName, v1.DeleteOptions{})
 	if err != nil {
 		klog.Errorf("unable to delete configMap %s", configMapName)
