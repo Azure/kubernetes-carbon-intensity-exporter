@@ -7,7 +7,9 @@
 package client
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 )
 
 // contextKeys are used to identify the type of value in the context.
@@ -21,6 +23,12 @@ func (c contextKey) String() string {
 }
 
 var (
+	// Namespace gets the env variable for the current namespace name.
+	Namespace = os.Getenv("NAMESPACE_NAME")
+
+	// PodName gets the env variable for the current pod.
+	PodName = os.Getenv("POD_NAME")
+
 	// ContextOAuth2 takes a oauth2.TokenSource as authentication for the request.
 	ContextOAuth2 = contextKey("token")
 
@@ -57,7 +65,7 @@ type Configuration struct {
 
 func NewConfiguration() *Configuration {
 	cfg := &Configuration{
-		BasePath:      "http://api-server-svc.default.svc.cluster.local",
+		BasePath:      fmt.Sprintf("http://api-server-svc.%s.svc.cluster.local", Namespace),
 		DefaultHeader: make(map[string]string),
 		UserAgent:     "KEDA/carbon-exporter",
 	}

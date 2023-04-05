@@ -43,7 +43,7 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configmapName st
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      configmapName,
-			Namespace: namespace,
+			Namespace: client.Namespace,
 		},
 		Immutable: &isImmutable,
 		Data: map[string]string{
@@ -59,7 +59,7 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configmapName st
 		},
 	}
 
-	currentConfig, err := e.clusterClient.CoreV1().ConfigMaps(namespace).Get(ctx, configmapName, v1.GetOptions{})
+	currentConfig, err := e.clusterClient.CoreV1().ConfigMaps(client.Namespace).Get(ctx, configmapName, v1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			klog.Infof("configmap %s is not found", configmapName)
@@ -72,13 +72,13 @@ func (e *Exporter) CreateOrUpdateConfigMap(ctx context.Context, configmapName st
 	if currentConfig != nil && currentConfig.Name != "" || !apierrors.IsNotFound(err) {
 		// Delete it first (as it is immutable)
 		klog.Info("deleting current the configmap")
-		err = e.clusterClient.CoreV1().ConfigMaps(namespace).Delete(ctx, configmapName, v1.DeleteOptions{})
+		err = e.clusterClient.CoreV1().ConfigMaps(client.Namespace).Delete(ctx, configmapName, v1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err = e.clusterClient.CoreV1().ConfigMaps(namespace).Create(ctx, configMap, v1.CreateOptions{})
+	_, err = e.clusterClient.CoreV1().ConfigMaps(client.Namespace).Create(ctx, configMap, v1.CreateOptions{})
 	if err != nil {
 		return err
 	}

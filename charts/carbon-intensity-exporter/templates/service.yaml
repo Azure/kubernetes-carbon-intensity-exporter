@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-server-svc
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "carbon-intensity-exporter.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: api-server-port
+      protocol: TCP
+  selector:
+    {{- include "carbon-intensity-exporter.selectorLabels" . | nindent 4 }}

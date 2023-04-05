@@ -5,7 +5,6 @@ Copyright (c) Microsoft Corporation.
 package exporter
 
 import (
-	"os"
 	"time"
 
 	"github.com/Azure/kubernetes-carbon-intensity-exporter/pkg/sdk/client"
@@ -16,11 +15,6 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
-)
-
-var (
-	podName   = os.Getenv("POD_NAME")
-	namespace = os.Getenv("NAMESPACE")
 )
 
 type Exporter struct {
@@ -53,16 +47,16 @@ func (e *Exporter) Patrol(ctx context.Context, configmapName, region string) {
 	if err != nil {
 		e.recorder.Eventf(&corev1.ObjectReference{
 			Kind:      "Pod",
-			Namespace: namespace,
-			Name:      podName,
+			Namespace: client.Namespace,
+			Name:      client.PodName,
 		}, corev1.EventTypeWarning, "Configmap Create", "Error while creating configmap")
 		klog.Errorf("an error has occurred while creating %s configmap, %s", configmapName, err.Error())
 		return
 	}
 	e.recorder.Eventf(&corev1.ObjectReference{
 		Kind:      "Pod",
-		Namespace: namespace,
-		Name:      podName,
+		Namespace: client.Namespace,
+		Name:      client.PodName,
 	}, corev1.EventTypeNormal, "Exporter results", "Done retrieve data")
 
 }
