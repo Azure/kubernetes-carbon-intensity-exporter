@@ -126,7 +126,7 @@ func (e *Exporter) RefreshData(ctx context.Context, configMapName string, region
 	if err != nil {
 		if currentConfigMap != nil {
 			// return old data with failed message
-			return e.UseCurrentConfigMap(ctx, currentConfigMap)
+			return e.UseCurrentConfigMap(ctx, err.Error(), currentConfigMap)
 		} else {
 			e.recorder.Eventf(&corev1.ObjectReference{
 				Kind:      "Pod",
@@ -160,14 +160,14 @@ func (e *Exporter) RefreshData(ctx context.Context, configMapName string, region
 	return nil
 }
 
-func (e *Exporter) UseCurrentConfigMap(ctx context.Context, currentConfigMap *corev1.ConfigMap) error {
+func (e *Exporter) UseCurrentConfigMap(ctx context.Context, message string, currentConfigMap *corev1.ConfigMap) error {
 	if currentConfigMap.Data != nil {
 		currentConfigMap.Data[ConfigMapLastHeartbeatTime] = time.Now().String()
 		currentConfigMap.Data[ConfigMapMessage] = "Unable to update forecast Data."
 	} else {
 		currentConfigMap.Data = map[string]string{
 			ConfigMapLastHeartbeatTime: time.Now().String(),
-			ConfigMapMessage:           "Unable to update forecast Data.",
+			ConfigMapMessage:           message,
 		}
 	}
 	if currentConfigMap.BinaryData == nil {
