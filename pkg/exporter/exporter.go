@@ -163,7 +163,7 @@ func (e *Exporter) RefreshData(ctx context.Context, configMapName string, region
 func (e *Exporter) UseCurrentConfigMap(ctx context.Context, message string, currentConfigMap *corev1.ConfigMap) error {
 	if currentConfigMap.Data != nil {
 		currentConfigMap.Data[ConfigMapLastHeartbeatTime] = time.Now().String()
-		currentConfigMap.Data[ConfigMapMessage] = "Unable to update forecast Data."
+		currentConfigMap.Data[ConfigMapMessage] = message
 	} else {
 		currentConfigMap.Data = map[string]string{
 			ConfigMapLastHeartbeatTime: time.Now().String(),
