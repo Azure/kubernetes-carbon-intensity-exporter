@@ -29,7 +29,7 @@ import (
 
 var (
 	//exporter command args
-	configmapName  = flag.String("configmap-name", "carbon-intensity", "Configmap name - Default 'carbonIntensity'")
+	configMapName  = flag.String("configmap-name", "carbon-intensity", "Configmap name - Default 'carbonIntensity'")
 	patrolInterval = flag.String("patrol-interval", "12h", "Patrol interval in hours - Default every 12 hours")
 	region         = flag.String("region", "", "Region to get carbon intensity for - Required")
 )
@@ -53,7 +53,7 @@ func NewExporterCommand(stopChan <-chan struct{}) *cobra.Command {
 			if err != nil {
 				klog.Fatalf("unable to initialize command configs: %s", err.Error())
 			}
-			if err := Run(c.Complete(), *region, *patrolInterval, stopChan); err != nil {
+			if err := Run(c.Complete(), stopChan); err != nil {
 				klog.Fatalf("unable to execute command : %s", err.Error())
 			}
 		},
@@ -82,7 +82,7 @@ func NewExporterCommand(stopChan <-chan struct{}) *cobra.Command {
 	return cmd
 }
 
-func Run(cc *exporterconfig.CompletedConfig, region string, patrolInterval string, stopCh <-chan struct{}) error {
+func Run(cc *exporterconfig.CompletedConfig, stopCh <-chan struct{}) error {
 	// Init client SDK and exporter
 	apiClient := client.NewAPIClient(client.NewConfiguration())
 	e, err := exporter.New(cc.ClusterClient, apiClient, cc.Recorder)
@@ -142,7 +142,7 @@ func startExporter(p *exporter.Exporter, stopCh <-chan struct{}) func(context.Co
 	}
 
 	return func(ctx context.Context) {
-		p.Run(ctx, *configmapName, *region, ptDuration, stopCh)
+		p.Run(ctx, *configMapName, *region, ptDuration, stopCh)
 		<-ctx.Done()
 	}
 }

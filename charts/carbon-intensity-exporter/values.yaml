@@ -11,7 +11,7 @@ apiServer:
   password: password
   image:
     repository: ghcr.io/azure/kubernetes-carbon-intensity-exporter/server
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
     tag: "0.1.0"
 carbonDataExporter:
   name: carbon-data-exporter
@@ -32,11 +32,9 @@ rbac:
   serviceAccountName: carbon-aware-sa
   roleRef: cluster-admin
 
-imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 podAnnotations: {}
-podSecurityContext: {}
 nodeSelector: {}
 tolerations: []
 affinity: {}
