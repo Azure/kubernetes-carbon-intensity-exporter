@@ -56,13 +56,12 @@ func (e *Exporter) Run(ctx context.Context, configMapName, region string, patrol
 		// if the configMap got deleted by user
 		case event := <-configMapWatch.ResultChan():
 			if event.Type == watch.Deleted {
-				err := e.Patrol(ctx, configMapName, region, stopChan)
+				err := e.RefreshData(ctx, configMapName, region, stopChan)
 				if err != nil {
 					return
 				}
-
-				configMapWatch.Stop()
 				// refresh watch after deletion
+				configMapWatch.Stop()
 				configMapWatch = e.GetGonfigMapWatch(ctx, configMapName)
 
 				e.recorder.Eventf(&corev1.ObjectReference{
@@ -74,19 +73,13 @@ func (e *Exporter) Run(ctx context.Context, configMapName, region string, patrol
 
 		// if refresh time elapsed
 		case <-refreshPatrol.C:
-			var err error
-			retry.OnError(retry.DefaultBackoff, func(err error) bool {
-				return true
-			}, func() error {
-				err = e.RefreshData(ctx, configMapName, region, stopChan)
-				return err
-			})
+			err := e.RefreshData(ctx, configMapName, region, stopChan)
 			if err != nil {
 				return
 			}
 
-			configMapWatch.Stop()
 			// refresh watch after deletion
+			configMapWatch.Stop()
 			configMapWatch = e.GetGonfigMapWatch(ctx, configMapName)
 
 			e.recorder.Eventf(&corev1.ObjectReference{
@@ -105,30 +98,26 @@ func (e *Exporter) Run(ctx context.Context, configMapName, region string, patrol
 
 func (e *Exporter) RefreshData(ctx context.Context, configMapName string, region string, stopChan <-chan struct{}) error {
 	err := e.DeleteConfigmap(ctx, configMapName)
-	if err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-	err = e.Patrol(ctx, configMapName, region, stopChan)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (e *Exporter) Patrol(ctx context.Context, configMapName, region string, stopChan <-chan struct{}) error {
-	forecast, err := e.getCurrentForecastData(ctx, region, stopChan)
-	if err != nil {
+	if err != nil && !apierrors.IsNotFound(err) { // if configMap is not found,
 		return err
 	}
 
-	err = e.CreateOrUpdateConfigMap(ctx, configMapName, forecast)
+	retry.OnError(retry.DefaultBackoff, func(err error) bool {
+		return true
+	}, func() error {
+		forecast, err := e.getCurrentForecastData(ctx, region, stopChan)
+		if err != nil {
+			return err
+		}
+		return e.CreateOrUpdateConfigMap(ctx, configMapName, forecast)
+	})
 	if err != nil {
 		e.recorder.Eventf(&corev1.ObjectReference{
 			Kind:      "Pod",
 			Namespace: namespace,
 			Name:      podName,
 		}, corev1.EventTypeWarning, "Configmap Create", "Error while creating configMap")
-		klog.Errorf("an error has occurred while creating %s configMap", configMapName)
+		klog.Errorf("an error has occurred while creating %s configMap, err: %s", configMapName, err.Error())
 		return err
 	}
 	e.recorder.Eventf(&corev1.ObjectReference{

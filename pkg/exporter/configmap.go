@@ -14,6 +14,7 @@ import (
 
 	"github.com/Azure/kubernetes-carbon-intensity-exporter/pkg/sdk/client"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/apimachinery/pkg/watch"
@@ -85,7 +86,9 @@ func (e *Exporter) GetGonfigMapWatch(ctx context.Context, configMapName string) 
 func (e *Exporter) DeleteConfigmap(ctx context.Context, configMapName string) error {
 	_, err := e.clusterClient.CoreV1().ConfigMaps(namespace).Get(ctx, configMapName, v1.GetOptions{})
 	if err != nil {
-		klog.Errorf("unable to get configMap %s", configMapName)
+		if apierrors.IsNotFound(err) { // if configMap is not found, no errors will be returned.
+			return nil
+		}
 		return err
 	}
 
