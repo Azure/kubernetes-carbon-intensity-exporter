@@ -1,5 +1,62 @@
 # Kubernetes Carbon Intensity Exporter
 
+This repo provides a data exporter by which Kubernetes operators can leverage the carbon intensity data from 3rd party for carbon-aware workload scheduling.
+
+## Installation
+
+We provide a helm chart to help install the exporter. Note that this data exporter ONLY retrieves the carbon intensity data from 
+[WattTime](https://www.watttime.org/). You need to get the **authentication ID/Password** from WattTime organization before using the exporter.
+
+```bash
+export USERNAME=XXXX   # WattTime auth info.
+export PASSWORD=YYYY
+export REGION=eastus   # The region where the AKS cluster locates.
+
+helm install carbon-intensity-exporter \
+   --set carbonDataExporter.region=$REGION \
+   --set apiServer.username=$USERNAME \
+   --set apiServer.password=$PASSWORD \
+   ./charts/carbon-intensity-exporter
+```
+You should be able to see one exporter Pod running in the `kube-system` namespace.
+```bash
+$ kubectl get pod -n kube-system | grep carbon-e2e-carbon-intensity-exporter
+$ carbon-e2e-carbon-intensity-exporter-XXXXXXX-XXXXX   2/2     Running   0          3m25s
+```
+
+You should also see one configmap `carbonintensity` is created in the `kube-system` namespace.
+```bash
+$ kubectl get configmap -n kube-system | grep carbon-intensity
+$ carbon-intensity                        7      3m25s
+```
+
+## Integration
+The configmap is formatted as the following:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: carbonintensity
+  namespace: kube-system
+immutable: true
+data:
+  lastHeartbeatTime: # The latest time that the data exporter controller sends the data. 
+  message: # Additional information for user notification, if any. 
+  numOfRecords: # The number can be any value between 0 (no records for the current location) and 24 * 12. 
+  forecastDateTime: # The time when the raw data was generated.
+  minForcast: # min forecast in the data.
+  maxForcast: # max forecast in the data.
+binarydata: 
+  data: # json marshal of the EmissionsData array.
+```
+
+The EmissionData struct is defined in [here](pkg/sdk/api/emissions_data.go). The data exporter will retrieve the 24-hour carbon intensity forecast data
+from WattTime every 12 hours. Upon successful data pull, the old configmap will be deleted and a new configmap with the same name will be created.
+If the data pull hits failures, the new confgimap is still created with the last seen binary data and the failure reason should be mentioned in the value
+of the `message` key. Any Kubernetes operator can read the configmap for utilizing the carbon intensity data.
+
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
