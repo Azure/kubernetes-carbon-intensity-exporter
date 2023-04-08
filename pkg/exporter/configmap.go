@@ -17,7 +17,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/json"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog/v2"
 )
 
@@ -72,18 +71,6 @@ func (e *Exporter) CreateConfigMapFromProperties(ctx context.Context, configMapN
 	}
 	klog.Infof("configMap %s has been created", configMapName)
 	return nil
-}
-
-func (e *Exporter) GetGonfigMapWatch(ctx context.Context, configMapName string) watch.Interface {
-	watch, err := e.clusterClient.CoreV1().
-		ConfigMaps(client.Namespace).
-		Watch(ctx, v1.ListOptions{
-			FieldSelector: "metadata.name=" + configMapName,
-		})
-	if err != nil {
-		klog.Fatalf("unable to watch configMap %s, err: %v", configMapName, err)
-	}
-	return watch
 }
 
 func (e *Exporter) DeleteConfigMap(ctx context.Context, configMapName string) error {
