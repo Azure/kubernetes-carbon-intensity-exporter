@@ -5,6 +5,7 @@ Copyright (c) Microsoft Corporation.
 package exporter
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Azure/kubernetes-carbon-intensity-exporter/pkg/sdk/client"
@@ -12,9 +13,11 @@ import (
 	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/informers"
 	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/klog/v2"
@@ -44,57 +47,67 @@ func New(clusterClient clientset.Interface, apiClient *client.APIClient, recorde
 
 func (e *Exporter) Run(ctx context.Context, configMapName, region string, patrolInterval time.Duration, stopChan <-chan struct{}) {
 	// create configMap first time
-	err := e.RefreshData(ctx, configMapName, region, stopChan)
+	err := e.RefreshData(ctx, configMapName, region)
 	if err != nil {
 		return
 	}
-	configMapWatch := e.GetGonfigMapWatch(ctx, configMapName)
 
-	// configMapWatch is reassigned when the config map is deleted,
-	// so we want to make sure to stop the last instance.
-	defer func() {
-		configMapWatch.Stop()
-	}()
+	informerFactory := informers.NewSharedInformerFactory(e.clusterClient, time.Hour*1)
+	configMapInformer := informerFactory.Core().V1().ConfigMaps().Informer()
+
+	// Create a channel to receive events from the informer
+	eventChan := make(chan interface{})
+	defer close(eventChan)
+
+	configMapInformer.AddEventHandler(
+		cache.ResourceEventHandlerFuncs{
+			DeleteFunc: func(obj interface{}) {
+				cm, ok := obj.(*corev1.ConfigMap)
+				if !ok {
+					return
+				}
+				if cm.ObjectMeta.Name != configMapName {
+					return
+				}
+				eventChan <- obj
+			},
+		})
+
+	go configMapInformer.Run(stopChan)
+	// Wait for the informer to sync
+	if !cache.WaitForCacheSync(stopChan, configMapInformer.HasSynced) {
+		runtime.HandleError(fmt.Errorf("timed out waiting for cache to sync"))
+		return
+	}
 
 	refreshPatrol := time.NewTicker(patrolInterval)
 	defer refreshPatrol.Stop()
 
 	for {
 		select {
-		// if the configMap got deleted by user
-		case event := <-configMapWatch.ResultChan():
-			if event.Type == watch.Deleted {
-				err := e.RefreshData(ctx, configMapName, region, stopChan)
-				if err != nil {
-					return
-				}
-				// refresh watch after deletion
-				configMapWatch.Stop()
-				configMapWatch = e.GetGonfigMapWatch(ctx, configMapName)
-
-				e.recorder.Eventf(&corev1.ObjectReference{
-					Kind:      "Pod",
-					Namespace: client.Namespace,
-					Name:      client.PodName,
-				}, corev1.EventTypeWarning, "Configmap Deleted", "Configmap got deleted")
-			}
-
-		// if refresh time elapsed
-		case <-refreshPatrol.C:
-			err := e.RefreshData(ctx, configMapName, region, stopChan)
+		case <-eventChan:
+			err := e.RefreshData(ctx, configMapName, region)
 			if err != nil {
 				return
 			}
-
-			// refresh watch after deletion
-			configMapWatch.Stop()
-			configMapWatch = e.GetGonfigMapWatch(ctx, configMapName)
 
 			e.recorder.Eventf(&corev1.ObjectReference{
 				Kind:      "Pod",
 				Namespace: client.Namespace,
 				Name:      client.PodName,
-			}, corev1.EventTypeNormal, "Configmap updated", "Configmap gets updated")
+			}, corev1.EventTypeWarning, "Configmap Deleted", "Configmap got deleted")
+
+		// if refresh time elapsed
+		case <-refreshPatrol.C:
+			err := e.DeleteConfigMap(ctx, configMapName)
+			if err != nil && !apierrors.IsNotFound(err) {
+				break
+			}
+			e.recorder.Eventf(&corev1.ObjectReference{
+				Kind:      "Pod",
+				Namespace: client.Namespace,
+				Name:      client.PodName,
+			}, corev1.EventTypeNormal, "Configmap updated", "Configmap got updated")
 
 			// context got canceled or done
 		case <-ctx.Done():
@@ -104,15 +117,16 @@ func (e *Exporter) Run(ctx context.Context, configMapName, region string, patrol
 	}
 }
 
-func (e *Exporter) RefreshData(ctx context.Context, configMapName string, region string, stopChan <-chan struct{}) error {
+func (e *Exporter) RefreshData(ctx context.Context, configMapName string, region string) error {
 	// get current object (if any) in case we could not update the data.
 	currentConfigMap, err := e.GetConfigMap(ctx, configMapName)
 	if err != nil {
 		return err
 	}
 
+	//delete old configmap if any
 	err = e.DeleteConfigMap(ctx, configMapName)
-	if err != nil && !apierrors.IsNotFound(err) { // if configMap is not found,
+	if err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
 
@@ -120,7 +134,7 @@ func (e *Exporter) RefreshData(ctx context.Context, configMapName string, region
 	err = retry.OnError(constantBackoff, func(err error) bool {
 		return true
 	}, func() error {
-		forecast, err = e.getCurrentForecastData(ctx, region, stopChan)
+		forecast, err = e.getCurrentForecastData(ctx, region)
 		return err
 	})
 	if err != nil {
@@ -179,7 +193,7 @@ func (e *Exporter) UseCurrentConfigMap(ctx context.Context, message string, curr
 		currentConfigMap.Data, currentConfigMap.BinaryData[BinaryData])
 }
 
-func (e *Exporter) getCurrentForecastData(ctx context.Context, region string, stopChan <-chan struct{}) ([]client.EmissionsForecastDto, error) {
+func (e *Exporter) getCurrentForecastData(ctx context.Context, region string) ([]client.EmissionsForecastDto, error) {
 	opt := &client.CarbonAwareApiGetCurrentForecastDataOpts{
 		DataStartAt: optional.EmptyTime(),
 		DataEndAt:   optional.EmptyTime(),
