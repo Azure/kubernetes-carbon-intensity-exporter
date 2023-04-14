@@ -8,14 +8,14 @@ We provide a helm chart to help install the exporter. Note that this data export
 [WattTime](https://www.watttime.org/). You need to get the **authentication ID/Password** from WattTime organization before using the exporter.
 
 ```bash
-export USERNAME=XXXX   # WattTime auth info.
-export PASSWORD=YYYY
-export REGION=eastus   # The region where the AKS cluster locates.
+export WTUSERNAME=XXXX   # WattTime auth info.
+export WTPASSWORD=YYYY
+export REGION=eastus     # The region where the AKS cluster locates.
 
 helm install carbon-intensity-exporter \
    --set carbonDataExporter.region=$REGION \
-   --set apiServer.username=$USERNAME \
-   --set apiServer.password=$PASSWORD \
+   --set apiServer.username=$WTUSERNAME \
+   --set apiServer.password=$WTPASSWORD \
    ./charts/carbon-intensity-exporter
 ```
 You should be able to see one exporter Pod running in the `kube-system` namespace.
@@ -24,7 +24,7 @@ $ kubectl get pod -n kube-system | grep carbon-e2e-carbon-intensity-exporter
 $ carbon-e2e-carbon-intensity-exporter-XXXXXXX-XXXXX   2/2     Running   0          3m25s
 ```
 
-You should also see one configmap `carbonintensity` is created in the `kube-system` namespace.
+You should also see one configmap `carbon-intensity` is created in the `kube-system` namespace.
 ```bash
 $ kubectl get configmap -n kube-system | grep carbon-intensity
 $ carbon-intensity                        7      3m25s
