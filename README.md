@@ -10,7 +10,7 @@ We provide a helm chart to help install the exporter. Note that this data export
 ```bash
 export WTUSERNAME=XXXX   # WattTime auth info.
 export WTPASSWORD=YYYY
-export REGION=eastus     # The region where the AKS cluster locates.
+export REGION=westus     # The region where the AKS cluster locates.
 
 helm install carbon-intensity-exporter \
    --set carbonDataExporter.region=$REGION \

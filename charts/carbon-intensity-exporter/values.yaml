@@ -21,7 +21,7 @@ carbonDataExporter:
     tag: "0.1.0"
   configmapName: carbon-intensity
   patrolInterval: 12h
-  region: eastus
+  region: westus
 
 service:
   type: ClusterIP
