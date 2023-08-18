@@ -7,21 +7,34 @@ namespace: kube-system
 
 apiServer:
   name: api-server
-  username: username
-  password: password
   image:
     repository: ghcr.io/azure/kubernetes-carbon-intensity-exporter/server
     pullPolicy: IfNotPresent
     tag: "0.1.0"
+  dataFileLocation: azure-regions.json
+  urls: http://0.0.0.0:7031;http://0.0.0.0:80;
 carbonDataExporter:
   name: carbon-data-exporter
   image:
     repository: ghcr.io/azure/kubernetes-carbon-intensity-exporter/exporter
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
     tag: "0.1.0"
   configmapName: carbon-intensity
   patrolInterval: 12h
   region: westus
+
+# One of either WattTime or ElectricityMaps
+providerName: WattTime
+
+electricityMaps:
+  apiToken: apiToken
+  apiTokenHeader: auth-token
+  baseURL: https://api.electricitymap.org/v3/
+
+wattTime:
+  baseURL: https://api2.watttime.org/v2/
+  username: username
+  password: password
 
 service:
   type: ClusterIP

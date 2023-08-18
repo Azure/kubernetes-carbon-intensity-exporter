@@ -5,19 +5,48 @@ This repo provides a data exporter by which Kubernetes operators can leverage th
 ## Installation
 
 We provide a helm chart to help install the exporter. Note that this data exporter ONLY retrieves the carbon intensity data from 
-[WattTime](https://www.watttime.org/). You need to get the **authentication ID/Password** from WattTime organization before using the exporter.
+[WattTime](https://www.watttime.org/) or [Electricity Maps](https://www.electricitymaps.com/). 
+
+### WattTime
+
+You need to get the **authentication ID/Password** from WattTime organization before using the exporter.
 
 ```bash
-export WTUSERNAME=XXXX   # WattTime auth info.
-export WTPASSWORD=YYYY
+export WT_USERNAME=XXXX   # WattTime auth info.
+export WT_PASSWORD=YYYY
 export REGION=westus     # The region where the AKS cluster locates.
 
+helm del carbon-intensity-exporter
 helm install carbon-intensity-exporter \
    --set carbonDataExporter.region=$REGION \
-   --set apiServer.username=$WTUSERNAME \
-   --set apiServer.password=$WTPASSWORD \
+   --set wattTime.username=$WT_USERNAME \
+   --set wattTime.password=$WT_PASSWORD \
    ./charts/carbon-intensity-exporter
 ```
+
+### Electricity Maps
+
+You need to get an **API key** from Electricity Maps before using the exporter.
+You can check the API key name and URL in the Electricity Maps API portal.
+
+```bash
+export EM_API_TOKEN=XXXX   # Electricity Maps API token.
+export EM_API_TOKEN_HEADER=auth-token   # Electricity Maps API token HTTP header.
+export EM_BASE_URL=https://api.electricitymap.org/v3/
+export PROVIDER=ElectricityMaps
+export REGION=westus     # The region where the AKS cluster locates.
+
+helm del carbon-intensity-exporter
+helm install carbon-intensity-exporter \
+   --set carbonDataExporter.region=$REGION \
+   --set providerName=$PROVIDER \
+   --set electricityMaps.apiToken=$EM_API_TOKEN \
+   --set electricityMaps.apiTokenHeader=$EM_API_TOKEN_HEADER \
+   --set electricityMaps.baseURL=$EM_BASE_URL \
+   ./charts/carbon-intensity-exporter
+```
+
+
 You should be able to see one exporter Pod running in the `kube-system` namespace.
 ```bash
 $ kubectl get pod -n kube-system | grep carbon-e2e-carbon-intensity-exporter

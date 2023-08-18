@@ -24,10 +24,46 @@ spec:
         - name: {{ .Values.apiServer.name }}
           image: "{{ .Values.apiServer.image.repository }}:{{ .Values.apiServer.image.tag }}"
           imagePullPolicy: {{ .Values.apiServer.image.pullPolicy }}
-          command:
-            - sh
-            - -c
-            - cd /app && sed "s/username/{{ .Values.apiServer.username }}/" -i appsettings.json && sed "s/password/{{ .Values.apiServer.password }}/" -i appsettings.json && dotnet CarbonAware.WebApi.dll
+          env:
+          - name: DataSources__EmissionsDataSource
+            value: {{ .Values.providerName }}
+          - name: DataSources__ForecastDataSource
+            value: {{ .Values.providerName }}
+          {{- if eq .Values.providerName "ElectricityMaps" }}
+          - name: DataSources__Configurations__ElectricityMaps__Type
+            value: {{ .Values.providerName }}
+          - name: DataSources__Configurations__ElectricityMaps__BaseURL
+            value: {{ .Values.electricityMaps.baseURL }}
+          - name: DataSources__Configurations__ElectricityMaps__APITokenHeader
+            value: {{ .Values.electricityMaps.apiTokenHeader }}
+          - name: DataSources__Configurations__ElectricityMaps__APIToken
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "carbon-intensity-exporter.fullname" . }}
+                key: apiToken
+          {{- end }}
+          {{- if eq .Values.providerName "WattTime" }}
+          - name: DataSources__Configurations__WattTime__Type
+            value: {{ .Values.providerName }}
+          - name: DataSources__Configurations__WattTime__BaseURL
+            value: {{ .Values.wattTime.baseURL }}
+          - name: DataSources__Configurations__WattTime__Proxy__useProxy
+            value: "false"
+          - name: DataSources__Configurations__WattTime__Username
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "carbon-intensity-exporter.fullname" . }}
+                key: username
+          - name: DataSources__Configurations__WattTime__Password
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "carbon-intensity-exporter.fullname" . }}
+                key: password
+          {{- end }}
+          - name: LocationDataSourcesConfiguration__LocationSourceFiles__DataFileLocation
+            value: {{ .Values.apiServer.dataFileLocation }}
+          - name: Urls
+            value: {{ .Values.apiServer.urls }}
           ports:
             - name: api-server-port
               containerPort: 7031
