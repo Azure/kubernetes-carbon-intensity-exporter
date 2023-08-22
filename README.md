@@ -5,7 +5,7 @@ This repo provides a data exporter by which Kubernetes operators can leverage th
 ## Installation
 
 We provide a helm chart to help install the exporter. Note that this data exporter ONLY retrieves the carbon intensity data from 
-[WattTime](https://www.watttime.org/) or [Electricity Maps](https://www.electricitymaps.com/). 
+[WattTime](https://www.watttime.org/) OR [Electricity Maps](https://www.electricitymaps.com/). 
 
 ### WattTime
 
@@ -46,11 +46,12 @@ helm install carbon-intensity-exporter \
    ./charts/carbon-intensity-exporter
 ```
 
+## View carbon intensity data
 
 You should be able to see one exporter Pod running in the `kube-system` namespace.
 ```bash
-$ kubectl get pod -n kube-system | grep carbon-e2e-carbon-intensity-exporter
-$ carbon-e2e-carbon-intensity-exporter-XXXXXXX-XXXXX   2/2     Running   0          3m25s
+$ kubectl get pod -n kube-system | grep carbon-intensity-exporter
+$ carbon-intensity-exporter-XXXXXXX-XXXXX   2/2     Running   0          3m25s
 ```
 
 You should also see one configmap `carbon-intensity` is created in the `kube-system` namespace.
