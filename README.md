@@ -26,8 +26,9 @@ helm install carbon-intensity-exporter \
 
 ### Electricity Maps
 
-You need to get an **API key** from Electricity Maps before using the exporter.
-You can check the API key name and URL in the Electricity Maps API portal.
+You need to get an **API token** from Electricity Maps before using the exporter.
+You can check the name of the API token HTTP header to use and the base URL in
+the Electricity Maps API portal.
 
 ```bash
 export EM_API_TOKEN=XXXX   # Electricity Maps API token.
