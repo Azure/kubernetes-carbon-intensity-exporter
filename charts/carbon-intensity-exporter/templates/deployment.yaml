@@ -33,7 +33,7 @@ spec:
           - name: DataSources__Configurations__ElectricityMaps__Type
             value: {{ .Values.providerName }}
           - name: DataSources__Configurations__ElectricityMaps__BaseURL
-            value: {{ .Values.electricityMaps.baseURL }}
+            value: {{ .Values.electricityMaps.baseURL | trimSuffix "/" }}/
           - name: DataSources__Configurations__ElectricityMaps__APITokenHeader
             value: {{ .Values.electricityMaps.apiTokenHeader }}
           - name: DataSources__Configurations__ElectricityMaps__APIToken
@@ -46,7 +46,7 @@ spec:
           - name: DataSources__Configurations__WattTime__Type
             value: {{ .Values.providerName }}
           - name: DataSources__Configurations__WattTime__BaseURL
-            value: {{ .Values.wattTime.baseURL }}
+            value: {{ .Values.wattTime.baseURL | trimSuffix "/" }}/
           - name: DataSources__Configurations__WattTime__Proxy__useProxy
             value: "false"
           - name: DataSources__Configurations__WattTime__Username
