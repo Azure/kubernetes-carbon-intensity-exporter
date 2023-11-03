@@ -5,7 +5,7 @@ EXPORTER_IMG_NAME ?= exporter
 EXPORTER_IMG_TAG ?= 0.1.0
 
 OUTPUT_TYPE ?= type=docker
-BUILDPLATFORM ?= linux/amd64
+BUILDPLATFORM ?= linux/amd64,linux/arm64
 BUILDX_BUILDER_NAME ?= img-builder
 QEMU_VERSION ?= 5.2.0-2
 
@@ -47,7 +47,7 @@ docker-build-server-image: docker-buildx-builder
 .PHONY: docker-build-exporter-image
 docker-build-exporter-image: docker-buildx-builder
 	 docker buildx build \
-		--file docker/carbon-data-exporter/Dockerfile \
+		--file docker/exporter/Dockerfile \
 		--output=$(OUTPUT_TYPE) \
 		--platform="$(BUILDPLATFORM)" \
 		--pull \
