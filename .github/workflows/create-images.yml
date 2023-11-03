@@ -1,38 +1,39 @@
 name: Create images
+
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [published]
+
 permissions:
   contents: write
   packages: write
-
 
 env:
   REGISTRY: ghcr.io
   # Common versions
   GO_VERSION: '1.19'
-  
-  SERVER_IMG_TAG : '0.1.0'
-  EXPORTER_IMG_TAG: '0.1.0'
 
 jobs:
-  export-registry:
+  export-registry-and-tag:
     runs-on: ubuntu-20.04
     outputs:
       registry: ${{ steps.export.outputs.registry }}
+      tag: ${{ steps.export.outputs.tag }}
     steps:
       - id: export
         run: |
           # registry must be in lowercase
           echo "registry=$(echo "${{ env.REGISTRY }}/${{ github.repository }}" | tr [:upper:] [:lower:])" >> $GITHUB_OUTPUT
+          echo "tag=$(echo ${GITHUB_REF#refs/tags/})" >> "$GITHUB_OUTPUT"
 
   publish-images:
     runs-on: ubuntu-20.04
     needs:
-    - export-registry
+    - export-registry-and-tag
     env:
-      REGISTRY: ${{ needs.export-registry.outputs.registry }}
+      REGISTRY: ${{ needs.export-registry-and-tag.outputs.registry }}
+      SERVER_IMG_TAG: ${{ needs.export-registry-and-tag.outputs.tag }}
+      EXPORTER_IMG_TAG: ${{ needs.export-registry-and-tag.outputs.tag }}
     steps:
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
         with:
@@ -43,7 +44,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ github.token }}
       - name: Build and push images
         run: |
           OUTPUT_TYPE=type=registry make docker-build-server-image docker-build-exporter-image
