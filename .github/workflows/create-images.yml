@@ -64,3 +64,34 @@ jobs:
             ${{ env.REGISTRY }}/${{ matrix.apps }}:${{ env.IMG_TAG }}
           labels: |
             org.opencontainers.image.source=${{ github.repositoryUrl }}
+
+  publish-chart:
+    runs-on: ubuntu-20.04
+    needs:
+    - export-registry-and-tag
+    - publish-images
+    env:
+      REGISTRY: ${{ needs.export-registry-and-tag.outputs.registry }}
+      IMG_TAG: ${{ needs.export-registry-and-tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Update values.yaml
+        run: |
+          sed -i 's|repository: ghcr.io/azure/kubernetes-carbon-intensity-exporter|repository: ${{ env.REGISTRY }}|g' ./charts/carbon-intensity-exporter/values.yaml
+          sed -i 's/tag: ".*"/tag: "${{ env.IMG_TAG }}"/g' ./charts/carbon-intensity-exporter/values.yaml
+      - name: Update Chart.yaml
+        run: |
+          sed -i "s/version: .*/version: ${{ env.IMG_TAG }}/g" ./charts/carbon-intensity-exporter/Chart.yaml
+          sed -i "s/appVersion: .*/appVersion: ${{ env.IMG_TAG }}/g" ./charts/carbon-intensity-exporter/Chart.yaml
+      - name: Login to ${{ env.REGISTRY }}
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - run: |
+          helm package ./charts/carbon-intensity-exporter --version ${{ env.IMG_TAG }}
+          helm push ./carbon-intensity-exporter-${{ github.ref_name }}.tgz oci://${{ env.REGISTRY }}/charts
