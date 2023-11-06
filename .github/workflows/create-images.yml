@@ -1,38 +1,45 @@
 name: Create images
+
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [published]
+
 permissions:
   contents: write
   packages: write
-
 
 env:
   REGISTRY: ghcr.io
   # Common versions
   GO_VERSION: '1.19'
-  
-  SERVER_IMG_TAG : '0.1.0'
-  EXPORTER_IMG_TAG: '0.1.0'
 
 jobs:
-  export-registry:
+  export-registry-and-tag:
     runs-on: ubuntu-20.04
     outputs:
       registry: ${{ steps.export.outputs.registry }}
+      tag: ${{ steps.export.outputs.tag }}
     steps:
       - id: export
         run: |
           # registry must be in lowercase
           echo "registry=$(echo "${{ env.REGISTRY }}/${{ github.repository }}" | tr [:upper:] [:lower:])" >> $GITHUB_OUTPUT
+          echo "tag=$(echo ${GITHUB_REF#refs/tags/})" >> "$GITHUB_OUTPUT"
 
   publish-images:
     runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        apps: [
+          exporter,
+          server
+        ]
     needs:
-    - export-registry
+    - export-registry-and-tag
     env:
-      REGISTRY: ${{ needs.export-registry.outputs.registry }}
+      REGISTRY: ${{ needs.export-registry-and-tag.outputs.registry }}
+      IMG_TAG: ${{ needs.export-registry-and-tag.outputs.tag }}
     steps:
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
         with:
@@ -43,10 +50,48 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push images
+          password: ${{ github.token }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226
+      - name: Build and push
+        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09
+        with:
+          context: .
+          file: docker/${{ matrix.apps }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ matrix.apps }}:${{ env.IMG_TAG }}
+          labels: |
+            org.opencontainers.image.source=${{ github.repositoryUrl }}
+
+  publish-chart:
+    runs-on: ubuntu-20.04
+    needs:
+    - export-registry-and-tag
+    - publish-images
+    env:
+      REGISTRY: ${{ needs.export-registry-and-tag.outputs.registry }}
+      IMG_TAG: ${{ needs.export-registry-and-tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Update values.yaml
         run: |
-          OUTPUT_TYPE=type=registry make docker-build-server-image docker-build-exporter-image
-        env:
-          SERVER_IMG_TAG: ${{ env.SERVER_IMG_TAG }}
-          EXPORTER_IMG_TAG: ${{ env.EXPORTER_IMG_TAG }}
+          sed -i 's|repository: ghcr.io/azure/kubernetes-carbon-intensity-exporter|repository: ${{ env.REGISTRY }}|g' ./charts/carbon-intensity-exporter/values.yaml
+          sed -i 's/tag: ".*"/tag: "${{ env.IMG_TAG }}"/g' ./charts/carbon-intensity-exporter/values.yaml
+      - name: Update Chart.yaml
+        run: |
+          sed -i "s/version: .*/version: ${{ env.IMG_TAG }}/g" ./charts/carbon-intensity-exporter/Chart.yaml
+          sed -i "s/appVersion: .*/appVersion: ${{ env.IMG_TAG }}/g" ./charts/carbon-intensity-exporter/Chart.yaml
+      - name: Login to ${{ env.REGISTRY }}
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - run: |
+          helm package ./charts/carbon-intensity-exporter --version ${{ env.IMG_TAG }}
+          helm push ./carbon-intensity-exporter-${{ github.ref_name }}.tgz oci://${{ env.REGISTRY }}/charts
