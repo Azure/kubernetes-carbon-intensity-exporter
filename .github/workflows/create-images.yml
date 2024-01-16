@@ -3,6 +3,7 @@ name: Create images
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -62,6 +63,8 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ matrix.apps }}:${{ env.IMG_TAG }}
+          build-args: |
+            GO_VERSION=${{ env.GO_VERSION }}
           labels: |
             org.opencontainers.image.source=${{ github.repositoryUrl }}
 
