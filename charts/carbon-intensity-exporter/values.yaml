@@ -10,7 +10,7 @@ apiServer:
   image:
     repository: ghcr.io/azure/kubernetes-carbon-intensity-exporter/server
     pullPolicy: IfNotPresent
-    tag: "0.1.0"
+    tag: "0.4.0"
   dataFileLocation: azure-regions.json
   urls: http://0.0.0.0:7031;http://0.0.0.0:80;
 carbonDataExporter:
@@ -18,7 +18,7 @@ carbonDataExporter:
   image:
     repository: ghcr.io/azure/kubernetes-carbon-intensity-exporter/exporter
     pullPolicy: IfNotPresent
-    tag: "0.1.0"
+    tag: "0.4.0"
   configmapName: carbon-intensity
   patrolInterval: 12h
   region: westus
@@ -32,7 +32,7 @@ electricityMaps:
   baseURL: https://api.electricitymap.org/v3/
 
 wattTime:
-  baseURL: https://api2.watttime.org/v2/
+  baseURL: https://api.watttime.org/v3/
   username: username
   password: password
 
