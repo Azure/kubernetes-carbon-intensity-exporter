@@ -60,7 +60,7 @@ spec:
                 name: {{ include "carbon-intensity-exporter.fullname" . }}
                 key: password
           {{- end }}
-          - name: LocationDataSourcesConfiguration__LocationSourceFiles__DataFileLocation
+          - name: LocationDataSourcesConfiguration__LocationSourceFiles__0__DataFileLocation
             value: {{ .Values.apiServer.dataFileLocation }}
           - name: Urls
             value: {{ .Values.apiServer.urls }}
