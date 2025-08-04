@@ -10,7 +10,7 @@ apiServer:
   image:
     repository: ghcr.io/azure/kubernetes-carbon-intensity-exporter/server
     pullPolicy: IfNotPresent
-    tag: "0.4.0"
+    tag: "v0.4.0"
   dataFileLocation: azure-regions.json
   urls: http://0.0.0.0:7031;http://0.0.0.0:80;
 carbonDataExporter:
@@ -18,7 +18,7 @@ carbonDataExporter:
   image:
     repository: ghcr.io/azure/kubernetes-carbon-intensity-exporter/exporter
     pullPolicy: IfNotPresent
-    tag: "0.4.0"
+    tag: "v0.4.0"
   configmapName: carbon-intensity
   patrolInterval: 12h
   region: westus
