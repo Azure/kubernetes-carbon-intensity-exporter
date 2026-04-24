@@ -16,7 +16,7 @@ env:
 
 jobs:
   export-registry-and-tag:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     outputs:
       registry: ${{ steps.export.outputs.registry }}
       tag: ${{ steps.export.outputs.tag }}
@@ -28,7 +28,7 @@ jobs:
           echo "tag=$(echo ${GITHUB_REF#refs/tags/})" >> "$GITHUB_OUTPUT"
 
   publish-images:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -69,7 +69,7 @@ jobs:
             org.opencontainers.image.source=${{ github.repositoryUrl }}
 
   publish-chart:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs:
     - export-registry-and-tag
     - publish-images
