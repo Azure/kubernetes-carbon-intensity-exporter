@@ -12,7 +12,7 @@ permissions:
 env:
   REGISTRY: ghcr.io
   # Common versions
-  GO_VERSION: '1.19'
+  GO_VERSION: '1.25'
 
 jobs:
   export-registry-and-tag:
