@@ -7,12 +7,12 @@ EXPORTER_IMG_TAG ?= 0.1.0
 OUTPUT_TYPE ?= type=docker
 BUILDPLATFORM ?= linux/amd64,linux/arm64
 BUILDX_BUILDER_NAME ?= img-builder
-QEMU_VERSION ?= 5.2.0-2
+QEMU_VERSION ?= 8.1.5-1
 
 TOOLS_DIR := hack/tools
 TOOLS_BIN_DIR := $(abspath $(TOOLS_DIR)/bin)
 
-GOLANGCI_LINT_VER := v1.49.0
+GOLANGCI_LINT_VER := v1.64.8
 GOLANGCI_LINT_BIN := golangci-lint
 GOLANGCI_LINT := $(abspath $(TOOLS_BIN_DIR)/$(GOLANGCI_LINT_BIN)-$(GOLANGCI_LINT_VER))
 
