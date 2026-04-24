@@ -11,6 +11,9 @@ RUN dotnet publish carbon-aware-sdk/src/CarbonAware.WebApi/src/CarbonAware.WebAp
 # Generate OpenAPI spec
 WORKDIR carbon-aware-sdk/src/CarbonAware.WebApi/src
 RUN dotnet tool restore && \
+    export DataSources__EmissionsDataSource=WattTime \
+           DataSources__ForecastDataSource=WattTime \
+           DataSources__Configurations__WattTime__Type=WattTime && \
     dotnet tool run swagger tofile --output /app/publish/wwwroot/api/v1/swagger.yaml --yaml /app/publish/CarbonAware.WebApi.dll v1
 
 # Build runtime image
