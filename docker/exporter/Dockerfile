@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 
 # Use distroless as minimal base image to package the exporter binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM --platform=${TARGETPLATFORM:-linux/amd64} gcr.io/distroless/static:nonroot
+FROM --platform=${TARGETPLATFORM:-linux/amd64} gcr.io/distroless/static-debian12:nonroot
 WORKDIR /
 COPY --from=builder /bin/exporter .
 
