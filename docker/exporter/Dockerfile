@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Build the manager binary
-ARG GO_VERSION=1.19
+ARG GO_VERSION=1.25
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} as builder
 
 WORKDIR /workspace
