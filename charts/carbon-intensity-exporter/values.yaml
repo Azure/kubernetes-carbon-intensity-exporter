@@ -20,7 +20,7 @@ carbonDataExporter:
     pullPolicy: IfNotPresent
     tag: "v0.4.0"
   configmapName: carbon-intensity
-  patrolInterval: 12h
+  patrolInterval: 2h
   region: westus
 
 # One of either WattTime or ElectricityMaps
